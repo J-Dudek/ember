@@ -225,3 +225,13 @@ module('Integration | Component | jumbo', function (hooks) {
   });
 });
 ```
+
+### Ajout `<NavBar>`
+
+Nous pouvons créer un <NavBar>composant à `app/components/nav-bar.hbs`
+Et nous l'ajoutons ainsi sur chaque page existanteen ajoutant en haut de page :
+
+```js
+<NavBar />
+```
+

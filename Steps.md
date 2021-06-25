@@ -256,3 +256,42 @@ Nous recréons donc `app/templates/application.hbs` :
 Et supprimons les `<NavBar />` des autres tempplates.
 
 Le mot-clé `{{outlet}}` désigne l'endroit où les pages de notre site doivent être rendues, similaire au mot-clé `{{yield}}` que nous avons vu plus tôt .
+
+## Étape 6 : Components (Avançé)
+
+### Génération de composants
+
+Commençons par créer le composant `<Rental>`. Cette fois, nous utiliserons le générateur de composants pour créer le modèle et le fichier de test pour nous :
+
+```bash
+ember generate component rental
+installing component
+  create app/components/rental.hbs
+  skip app/components/rental.js
+  tip to add a class, run `ember generate component-class rental`
+installing component-test
+  create tests/integration/components/rental-test.js
+```
+
+Le générateur a créé deux nouveaux fichiers pour nous, un modèle de composant à ```app/components/rental.hbs``` et un fichier de test de composant à ```tests/integration/components/rental-test.js```
+
+Nous allons commencer par éditer le modèle. Pour l'instant, codons en dur les détails d'un bien locatif et remplaçons-le par les données réelles du serveur plus tard :
+```hbs
+<article class="rental">
+  <div class="details">
+    <h3>Grand Old Mansion</h3>
+    <div class="detail owner">
+      <span>Owner:</span> Veruca Salt
+    </div>
+    <div class="detail type">
+      <span>Type:</span> Standalone
+    </div>
+    <div class="detail location">
+      <span>Location:</span> San Francisco
+    </div>
+    <div class="detail bedrooms">
+      <span>Number of bedrooms:</span> 15
+    </div>
+  </div>
+</article>
+```

@@ -400,13 +400,15 @@ Au lieu de coder en dur des valeurs spécifiques pour les attributs srcet altsur
   </div>
 </article>
 ```
-Nous avons spécifié ici un ```src``` et un attribut HTML ```alt``` , qui seront transmis au composant et attachés à l'élément où ```...attributes``` est appliqué dans le modèle de composant. Vous pouvez considérer cela comme similaire à ```{{yield}}```, mais pour les attributs HTML en particulier, plutôt que pour le contenu affiché. En fait, nous avons déjà utilisé cette fonctionnalité plus tôt lorsque nous avons passé un classattribut à ```<LinkTo>```.
 
-En général, c'est une bonne idée d'ajouter ```...attributes```à l'élément principal de votre composant. Cela permettra une flexibilité maximale, car l'invocateur peut avoir besoin de transmettre des classes pour le style ou des attributs ARIA pour améliorer l'accessibilité.
+Nous avons spécifié ici un `src` et un attribut HTML `alt` , qui seront transmis au composant et attachés à l'élément où `...attributes` est appliqué dans le modèle de composant. Vous pouvez considérer cela comme similaire à `{{yield}}`, mais pour les attributs HTML en particulier, plutôt que pour le contenu affiché. En fait, nous avons déjà utilisé cette fonctionnalité plus tôt lorsque nous avons passé un classattribut à `<LinkTo>`.
+
+En général, c'est une bonne idée d'ajouter `...attributes`à l'élément principal de votre composant. Cela permettra une flexibilité maximale, car l'invocateur peut avoir besoin de transmettre des classes pour le style ou des attributs ARIA pour améliorer l'accessibilité.
 
 Écrivons un test pour notre nouveau composant !
 
-```tests/intégration/composants/location/image-test.js```:
+`tests/intégration/composants/location/image-test.js`:
+
 ```js
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
@@ -431,5 +433,31 @@ module('Integration | Component | rental/image', function (hooks) {
       .hasAttribute('alt', 'Teaching Tomster');
   });
 });
-````
+```
 
+Enfin, nous devons également mettre à jour les tests du commposant `<Rental> ` pour confirmer que nous avons appelé avec succès `<Rental::Image>`.
+
+On obtient donc `tests/intégration/composants/rental-test.js` :
+
+```js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+
+module('Integration | Component | rental', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders information about a rental property', async function (assert) {
+    await render(hbs`<Rental />`);
+
+    assert.dom('article').hasClass('rental');
+    assert.dom('article h3').hasText('Grand Old Mansion');
+    assert.dom('article .detail.owner').includesText('Veruca Salt');
+    assert.dom('article .detail.type').includesText('Standalone');
+    assert.dom('article .detail.location').includesText('San Francisco');
+    assert.dom('article .detail.bedrooms').includesText('15');
+    assert.dom('article .image').exists();
+  });
+});
+```

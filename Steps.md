@@ -256,3 +256,208 @@ Nous recréons donc `app/templates/application.hbs` :
 Et supprimons les `<NavBar />` des autres tempplates.
 
 Le mot-clé `{{outlet}}` désigne l'endroit où les pages de notre site doivent être rendues, similaire au mot-clé `{{yield}}` que nous avons vu plus tôt .
+
+## Étape 6 : Components (Avançé)
+
+### Génération de composants
+
+Commençons par créer le composant `<Rental>`. Cette fois, nous utiliserons le générateur de composants pour créer le modèle et le fichier de test pour nous :
+
+```bash
+ember generate component rental
+installing component
+  create app/components/rental.hbs
+  skip app/components/rental.js
+  tip to add a class, run `ember generate component-class rental`
+installing component-test
+  create tests/integration/components/rental-test.js
+```
+
+Le générateur a créé deux nouveaux fichiers pour nous, un modèle de composant à `app/components/rental.hbs` et un fichier de test de composant à `tests/integration/components/rental-test.js`
+
+Nous allons commencer par éditer le modèle. Pour l'instant, codons en dur les détails d'un bien locatif et remplaçons-le par les données réelles du serveur plus tard :
+
+```hbs
+<article class='rental'>
+  <div class='details'>
+    <h3>Grand Old Mansion</h3>
+    <div class='detail owner'>
+      <span>Owner:</span>
+      Veruca Salt
+    </div>
+    <div class='detail type'>
+      <span>Type:</span>
+      Standalone
+    </div>
+    <div class='detail location'>
+      <span>Location:</span>
+      San Francisco
+    </div>
+    <div class='detail bedrooms'>
+      <span>Number of bedrooms:</span>
+      15
+    </div>
+  </div>
+</article>
+```
+
+Ensuite, nous écrirons un test pour nous assurer que tous les détails sont présents. Nous remplacerons le test standard généré pour nous par nos propres assertions, tout comme nous l'avons fait pour le composant `<Jumbo>` précédemment :
+
+```js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+
+module('Integration | Component | rental', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders information about a rental property', async function (assert) {
+    await render(hbs`<Rental />`);
+
+    assert.dom('article').hasClass('rental');
+    assert.dom('article h3').hasText('Grand Old Mansion');
+    assert.dom('article .detail.owner').includesText('Veruca Salt');
+    assert.dom('article .detail.type').includesText('Standalone');
+    assert.dom('article .detail.location').includesText('San Francisco');
+    assert.dom('article .detail.bedrooms').includesText('15');
+  });
+});
+```
+
+Enfin, invoquons ceci plusieurs fois à partir de notre modèle d'index pour remplir la page sur `app/templates/index.hbs`.
+
+```hbs
+<Jumbo>
+  <h2>Welcome to Super Rentals!</h2>
+  <p>We hope you find exactly what you're looking for in a place to stay.</p>
+  <LinkTo @route='about' class='button'>About Us</LinkTo>
+</Jumbo>
+
+<div class='rentals'>
+  <ul class='results'>
+    <li><Rental /></li>
+    <li><Rental /></li>
+    <li><Rental /></li>
+  </ul>
+</div>
+```
+
+### Organisation du code avec des composants avec espace de noms
+
+Ensuite, ajoutons l'image de la propriété locative. Nous utiliserons à nouveau le générateur de composants pour cela :
+
+```bash
+$ ember generate component rental/image
+installing component
+  create app/components/rental/image.hbs
+  skip app/components/rental/image.js
+  tip to add a class, run `ember generate component-class rental/image`
+installing component-test
+  create tests/integration/components/rental/image-test.js
+```
+
+Cette fois, nous avions un `/` dans le nom du composant. Cela a entraîné la création du composant à `app/components/rental/image.hbs`, qui peut être appelé en tant que `<Rental::Image>`.
+
+Les composants comme ceux-ci sont appelés composants avec espace de noms . L'espacement de noms nous permet d'organiser nos composants par dossiers en fonction de leur objectif. Ceci est complètement facultatif - les composants avec espace de noms ne sont en aucun cas spéciaux.
+
+#### Transfert d'attributs HTML avec `...attributes`
+
+Modifions le modèle du composant :
+
+```js
+<div class="image">
+  <img ...attributes>
+</div>
+```
+
+Au lieu de coder en dur des valeurs spécifiques pour les attributs srcet altsur la balise `<img>`, nous avons plutôt opté pour le mot - clé `...attributes`, qui est également parfois appelé syntaxe « splattributes » . Cela permet à des attributs HTML arbitraires d'être transmis lors de l'appel de ce composant, comme ceci `app/components/rental.hbs` :
+
+```hbs
+<article class='rental'>
+  <Rental::Image
+    src='https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg'
+    alt='A picture of Grand Old Mansion'
+  />
+  <div class='details'>
+    <h3>Grand Old Mansion</h3>
+    <div class='detail owner'>
+      <span>Owner:</span>
+      Veruca Salt
+    </div>
+    <div class='detail type'>
+      <span>Type:</span>
+      Standalone
+    </div>
+    <div class='detail location'>
+      <span>Location:</span>
+      San Francisco
+    </div>
+    <div class='detail bedrooms'>
+      <span>Number of bedrooms:</span>
+      15
+    </div>
+  </div>
+</article>
+```
+
+Nous avons spécifié ici un `src` et un attribut HTML `alt` , qui seront transmis au composant et attachés à l'élément où `...attributes` est appliqué dans le modèle de composant. Vous pouvez considérer cela comme similaire à `{{yield}}`, mais pour les attributs HTML en particulier, plutôt que pour le contenu affiché. En fait, nous avons déjà utilisé cette fonctionnalité plus tôt lorsque nous avons passé un classattribut à `<LinkTo>`.
+
+En général, c'est une bonne idée d'ajouter `...attributes`à l'élément principal de votre composant. Cela permettra une flexibilité maximale, car l'invocateur peut avoir besoin de transmettre des classes pour le style ou des attributs ARIA pour améliorer l'accessibilité.
+
+Écrivons un test pour notre nouveau composant !
+
+`tests/intégration/composants/location/image-test.js`:
+
+```js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+
+module('Integration | Component | rental/image', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders the given image', async function (assert) {
+    await render(hbs`
+      <Rental::Image
+        src="/assets/images/teaching-tomster.png"
+        alt="Teaching Tomster"
+      />
+    `);
+
+    assert
+      .dom('.image img')
+      .exists()
+      .hasAttribute('src', '/assets/images/teaching-tomster.png')
+      .hasAttribute('alt', 'Teaching Tomster');
+  });
+});
+```
+
+Enfin, nous devons également mettre à jour les tests du commposant `<Rental> ` pour confirmer que nous avons appelé avec succès `<Rental::Image>`.
+
+On obtient donc `tests/intégration/composants/rental-test.js` :
+
+```js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+
+module('Integration | Component | rental', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders information about a rental property', async function (assert) {
+    await render(hbs`<Rental />`);
+
+    assert.dom('article').hasClass('rental');
+    assert.dom('article h3').hasText('Grand Old Mansion');
+    assert.dom('article .detail.owner').includesText('Veruca Salt');
+    assert.dom('article .detail.type').includesText('Standalone');
+    assert.dom('article .detail.location').includesText('San Francisco');
+    assert.dom('article .detail.bedrooms').includesText('15');
+    assert.dom('article .image').exists();
+  });
+});
+```

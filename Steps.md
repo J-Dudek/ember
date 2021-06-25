@@ -273,25 +273,54 @@ installing component-test
   create tests/integration/components/rental-test.js
 ```
 
-Le générateur a créé deux nouveaux fichiers pour nous, un modèle de composant à ```app/components/rental.hbs``` et un fichier de test de composant à ```tests/integration/components/rental-test.js```
+Le générateur a créé deux nouveaux fichiers pour nous, un modèle de composant à `app/components/rental.hbs` et un fichier de test de composant à `tests/integration/components/rental-test.js`
 
 Nous allons commencer par éditer le modèle. Pour l'instant, codons en dur les détails d'un bien locatif et remplaçons-le par les données réelles du serveur plus tard :
+
 ```hbs
-<article class="rental">
-  <div class="details">
+<article class='rental'>
+  <div class='details'>
     <h3>Grand Old Mansion</h3>
-    <div class="detail owner">
-      <span>Owner:</span> Veruca Salt
+    <div class='detail owner'>
+      <span>Owner:</span>
+      Veruca Salt
     </div>
-    <div class="detail type">
-      <span>Type:</span> Standalone
+    <div class='detail type'>
+      <span>Type:</span>
+      Standalone
     </div>
-    <div class="detail location">
-      <span>Location:</span> San Francisco
+    <div class='detail location'>
+      <span>Location:</span>
+      San Francisco
     </div>
-    <div class="detail bedrooms">
-      <span>Number of bedrooms:</span> 15
+    <div class='detail bedrooms'>
+      <span>Number of bedrooms:</span>
+      15
     </div>
   </div>
 </article>
+```
+
+Ensuite, nous écrirons un test pour nous assurer que tous les détails sont présents. Nous remplacerons le test standard généré pour nous par nos propres assertions, tout comme nous l'avons fait pour le composant `<Jumbo>` précédemment :
+
+```js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+
+module('Integration | Component | rental', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders information about a rental property', async function (assert) {
+    await render(hbs`<Rental />`);
+
+    assert.dom('article').hasClass('rental');
+    assert.dom('article h3').hasText('Grand Old Mansion');
+    assert.dom('article .detail.owner').includesText('Veruca Salt');
+    assert.dom('article .detail.type').includesText('Standalone');
+    assert.dom('article .detail.location').includesText('San Francisco');
+    assert.dom('article .detail.bedrooms').includesText('15');
+  });
+});
 ```

@@ -197,3 +197,31 @@ Essayons-le en modifiant le modèle d'index :
 </Jumbo>
 ```
 
+### Écriture de tests de composants
+
+Lancer
+
+```bash
+ember generate component-test jumbo
+```
+
+Remplaçons le code passe-partout qui a été généré pour nous par notre propre test :
+
+```js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+
+module('Integration | Component | jumbo', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders the content inside a jumbo header with a tomster', async function (assert) {
+    await render(hbs`<Jumbo>Hello World</Jumbo>`);
+
+    assert.dom('.jumbo').exists();
+    assert.dom('.jumbo').hasText('Hello World');
+    assert.dom('.jumbo .tomster').exists();
+  });
+});
+```

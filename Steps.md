@@ -324,3 +324,19 @@ module('Integration | Component | rental', function (hooks) {
   });
 });
 ```
+Enfin, invoquons ceci plusieurs fois à partir de notre modèle d'index pour remplir la page sur ```app/templates/index.hbs```.
+```hbs
+<Jumbo>
+  <h2>Welcome to Super Rentals!</h2>
+  <p>We hope you find exactly what you're looking for in a place to stay.</p>
+  <LinkTo @route="about" class="button">About Us</LinkTo>
+</Jumbo>
+
+<div class="rentals">
+  <ul class="results">
+    <li><Rental /></li>
+    <li><Rental /></li>
+    <li><Rental /></li>
+  </ul>
+</div>
+```

@@ -851,7 +851,9 @@ Mise en place dans le template :
   />
 </article>
 ```
-Pour faire bonne mesure, nous ajouterons également une assertion aux tests ```<Rental>``` pour nous assurer que nous avons rendu le composant ```<Map>``` avec succès.
+
+Pour faire bonne mesure, nous ajouterons également une assertion aux tests `<Rental>` pour nous assurer que nous avons rendu le composant `<Map>` avec succès.
+
 ```js
 //tests/intégration/composants/rental-test.js
 import { module, test } from 'qunit';
@@ -876,3 +878,51 @@ module('Integration | Component | rental', function (hooks) {
   });
 });
 ```
+
+### Refactoring avec Getters et Auto-track
+
+À ce stade, une grande partie de notre model `<Map>` est consacrée à l' attribut de la balise `<img>` et `src`, qui devient assez long. Une alternative consiste à déplacer ce calcul dans la classe JavaScript à la place.
+
+Depuis notre classe JavaScript, nous avons accès aux arguments de notre composant à l'aide de l'API `this.args.*`. En utilisant cela, nous pouvons déplacer la logique d'URL du modèle vers un nouveau getter.
+
+```js
+//app/components/map.js
+import Component from '@glimmer/component';
+import ENV from 'super-rentals/config/environment';
+
+const MAPBOX_API = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static';
+
+export default class MapComponent extends Component {
+  get src() {
+    let { lng, lat, width, height, zoom } = this.args;
+
+    let coordinates = `${lng},${lat},${zoom}`;
+    let dimensions = `${width}x${height}`;
+    let accessToken = `access_token=${this.token}`;
+
+    return `${MAPBOX_API}/${coordinates}/${dimensions}@2x?${accessToken}`;
+  }
+
+  get token() {
+    return encodeURIComponent(ENV.MAPBOX_ACCESS_TOKEN);
+  }
+}
+```
+
+et
+
+```js
+//app/components/map.hbs
+<div class="map">
+    <img alt="Map image at coordinates {{@lat}},{{@lng}}" ...attributes
+        src={{this.src}}
+        width={{@width}} height={{@height}}>
+</div>
+```
+
+Notez que nous n'avons pas marqué notre getter comme `@tracked`. Contrairement aux variables d'instance, les getters ne peuvent pas être "affectés" directement à une nouvelle valeur, il n'est donc pas logique qu'Ember les surveille pour les changements.
+
+Cela étant dit, les valeurs produites par les getters peuvent certainement changer. Dans notre cas, la valeur produite par notre getter `src` dépend des valeurs de `lat`, `lng`, `width`, `height` et `zoom` de `this.args`. Chaque fois que ces dépendances sont mises à jour,
+`{{this.src}}` sera mis à jour et notre model en conséquence.
+
+Ember le fait en suivant automatiquement toutes les variables auxquelles on a accédé lors du calcul de la valeur d'un getter. Tant que les dépendances elles-mêmes sont marquées comme `@tracked`, Ember sait exactement quand invalider et restituer tous les modèles pouvant potentiellement contenir des valeurs getter "obsolètes". Cette fonction est également connue sous le nom de suivi automatique . Tous les arguments accessibles à partir de `this.args`(en d'autres termes, `this.args.*`) sont implicitement marqués comme `@tracked` par la superclasse du composant Glimmer. Depuis que nous avons hérité de cette superclasse, tout fonctionne simplement.

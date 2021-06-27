@@ -926,3 +926,77 @@ Cela étant dit, les valeurs produites par les getters peuvent certainement chan
 `{{this.src}}` sera mis à jour et notre model en conséquence.
 
 Ember le fait en suivant automatiquement toutes les variables auxquelles on a accédé lors du calcul de la valeur d'un getter. Tant que les dépendances elles-mêmes sont marquées comme `@tracked`, Ember sait exactement quand invalider et restituer tous les modèles pouvant potentiellement contenir des valeurs getter "obsolètes". Cette fonction est également connue sous le nom de suivi automatique . Tous les arguments accessibles à partir de `this.args`(en d'autres termes, `this.args.*`) sont implicitement marqués comme `@tracked` par la superclasse du composant Glimmer. Depuis que nous avons hérité de cette superclasse, tout fonctionne simplement.
+
+### Obtenir des valeurs JavaScript dans le contexte de test
+
+Pour être sûr, nous pouvons ajouter un test pour ce comportement :
+
+```js
+//tests/intégration/composants/map-test.js
+test('it updates the `src` attribute when the arguments change', async function (assert) {
+  this.setProperties({
+    lat: 37.7749,
+    lng: -122.4194,
+    zoom: 10,
+    width: 150,
+    height: 120,
+  });
+
+  await render(hbs`<Map
+      @lat={{this.lat}}
+      @lng={{this.lng}}
+      @zoom={{this.zoom}}
+      @width={{this.width}}
+      @height={{this.height}}
+    />`);
+
+  let img = find('.map img');
+
+  assert.ok(
+    img.src.includes('-122.4194,37.7749,10'),
+    'the src should include the lng,lat,zoom parameter'
+  );
+
+  assert.ok(
+    img.src.includes('150x120@2x'),
+    'the src should include the width,height and @2x parameter'
+  );
+
+  this.setProperties({
+    width: 300,
+    height: 200,
+    zoom: 12,
+  });
+
+  assert.ok(
+    img.src.includes('-122.4194,37.7749,12'),
+    'the src should include the lng,lat,zoom parameter'
+  );
+
+  assert.ok(
+    img.src.includes('300x200@2x'),
+    'the src should include the width,height and @2x parameter'
+  );
+
+  this.setProperties({
+    lat: 47.6062,
+    lng: -122.3321,
+  });
+
+  assert.ok(
+    img.src.includes('-122.3321,47.6062,12'),
+    'the src should include the lng,lat,zoom parameter'
+  );
+
+  assert.ok(
+    img.src.includes('300x200@2x'),
+    'the src should include the width,height and @2x parameter'
+  );
+});
+```
+
+En utilisant l'API `this.setProperties` de test spéciale , nous pouvons transmettre des valeurs arbitraires dans notre composant.
+
+Notez qu'ici la valeur de `this` ne fait pas référence à l'instance du composant. Nous n'accédons ni ne modifions directement les états internes du composant.
+
+Au lieu de cela, `this` fait référence à un objet de contexte de test spécial , auquel nous avons accès à l'intérieur de l'assistant `render`. Cela nous fournit un "pont" pour passer des valeurs dynamiques, sous forme d'arguments, dans notre invocation du composant. Cela nous permet de mettre à jour ces valeurs au besoin à partir de la fonction de test.

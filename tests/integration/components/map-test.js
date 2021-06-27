@@ -41,6 +41,67 @@ module('Integration | Component | map', function (hooks) {
     );
   });
 
+  test('it updates the `src` attribute when the arguments change', async function (assert) {
+    this.setProperties({
+      lat: 37.7749,
+      lng: -122.4194,
+      zoom: 10,
+      width: 150,
+      height: 120,
+    });
+
+    await render(hbs`<Map
+      @lat={{this.lat}}
+      @lng={{this.lng}}
+      @zoom={{this.zoom}}
+      @width={{this.width}}
+      @height={{this.height}}
+    />`);
+
+    let img = find('.map img');
+
+    assert.ok(
+      img.src.includes('-122.4194,37.7749,10'),
+      'the src should include the lng,lat,zoom parameter'
+    );
+
+    assert.ok(
+      img.src.includes('150x120@2x'),
+      'the src should include the width,height and @2x parameter'
+    );
+
+    this.setProperties({
+      width: 300,
+      height: 200,
+      zoom: 12,
+    });
+
+    assert.ok(
+      img.src.includes('-122.4194,37.7749,12'),
+      'the src should include the lng,lat,zoom parameter'
+    );
+
+    assert.ok(
+      img.src.includes('300x200@2x'),
+      'the src should include the width,height and @2x parameter'
+    );
+
+    this.setProperties({
+      lat: 47.6062,
+      lng: -122.3321,
+    });
+
+    assert.ok(
+      img.src.includes('-122.3321,47.6062,12'),
+      'the src should include the lng,lat,zoom parameter'
+    );
+
+    assert.ok(
+      img.src.includes('300x200@2x'),
+      'the src should include the width,height and @2x parameter'
+    );
+  });
+
   test('the default alt attribute can be overridden', async function (assert) {
     await render(hbs`<Map
       @lat="37.7797"

@@ -461,22 +461,27 @@ module('Integration | Component | rental', function (hooks) {
   });
 });
 ```
+
 ## Étape 7 : Interactive Components
 
 ### Ajout de comportement aux composants avec des classes
+
 Ici, nous allons faire exactement cela! Nous allons implémenter les fonctionnalités "Voir plus grand" et "Voir plus petit", qui permettront à nos utilisateurs de cliquer sur l'image d'une propriété pour voir une version plus grande, et de cliquer à nouveau dessus pour revenir à la version plus petite.
 
 En d'autres termes, nous voulons un moyen de basculer l'image entre l'un des deux états . Pour ce faire, nous avons besoin d'un moyen pour le composant de stocker deux états possibles et de savoir dans quel état il se trouve actuellement.
 
-Ember nous permet éventuellement d'associer du code JavaScript à un composant exactement à cette fin. Nous pouvons ajouter un fichier JavaScript pour notre composant ```<Rental::Image>``` en exécutant le générateur ```component-class``` :
+Ember nous permet éventuellement d'associer du code JavaScript à un composant exactement à cette fin. Nous pouvons ajouter un fichier JavaScript pour notre composant `<Rental::Image>` en exécutant le générateur `component-class` :
+
 ```bash
 $ ember generate component-class rental/image
 installing component-class
   create app/components/rental/image.js
 ```
-Cela a généré un fichier JavaScript portant le même nom que le modèle de notre composant à l'adresse ```app/components/rental/image.js```. Il contient une classe JavaScript , héritant de ```@glimmer/component```.
+
+Cela a généré un fichier JavaScript portant le même nom que le modèle de notre composant à l'adresse `app/components/rental/image.js`. Il contient une classe JavaScript , héritant de `@glimmer/component`.
 
 Ember créera une instance de la classe chaque fois que notre composant est invoqué. Nous pouvons utiliser cette instance pour stocker notre état :
+
 ```js
 //app/components/rental/image.js
 import Component from '@glimmer/component';
@@ -490,7 +495,9 @@ export default class RentalImageComponent extends Component {
 ```
 
 ### Accès aux états d'instance à partir de modèles
+
 Mettons à jour notre modèle pour utiliser cet état que nous venons d'ajouter:
+
 ```js
 //app/components/rental/image.hbs
 {{#if this.isLarge}}
@@ -504,4 +511,15 @@ Mettons à jour notre modèle pour utiliser cet état que nous venons d'ajouter:
     <small>View Larger</small>
   </div>
 {{/if}}
+```
+
+Étant donné que ce modèle d'initialisation des variables d'instance dans le constructeur est assez courant, il se trouve qu'il existe une syntaxe beaucoup plus concise pour cela :
+
+```js
+//app/components/rental/image.js
+import Component from '@glimmer/component';
+
+export default class RentalImageComponent extends Component {
+  isLarge = false;
+}
 ```

@@ -640,14 +640,17 @@ Ces changements sont profondément enfouis dans la grande quantité de code dupl
 Qu'il s'agisse ou non d'une amélioration de la clarté de notre code est principalement une question de goût. Quoi qu'il en soit, nous avons considérablement réduit la duplication dans notre code et fait ressortir les éléments logiques importants du reste.
 
 ## Étape 8 : Reusables Components
+
 ### Gestion des configurations au niveau de l'application
+
 Nous utiliserons l' API [Mapbox](https://www.mapbox.com/) pour générer des cartes pour nos propriétés locatives. Vous pouvez vous inscrire gratuitement et sans carte de crédit.
 
-Mapbox fournit une API d'images de carte statique , qui sert des images de carte au format PNG. Cela signifie que nous pouvons générer l'URL appropriée pour les paramètres que nous voulons et afficher la carte à l'aide d'une balise ```<img>``` standard . Génial!
+Mapbox fournit une API d'images de carte statique , qui sert des images de carte au format PNG. Cela signifie que nous pouvons générer l'URL appropriée pour les paramètres que nous voulons et afficher la carte à l'aide d'une balise `<img>` standard . Génial!
 
 Si vous êtes curieux, vous pouvez explorer les options disponibles sur Mapbox en utilisant le terrain de jeu interactif .
 
-Une fois que vous vous êtes inscrit au service, récupérez votre jeton public par défaut et collez-le dans ```config/environment.js``` :
+Une fois que vous vous êtes inscrit au service, récupérez votre jeton public par défaut et collez-le dans `config/environment.js` :
+
 ```js
 ...
 
@@ -659,3 +662,36 @@ if (environment === 'production') {
   return ENV;
 };
 ```
+
+Après avoir enregistré les modifications dans notre fichier de configuration, nous devrons redémarrer notre serveur de développement pour récupérer ces modifications de fichier. Contrairement aux fichiers que nous avons édités jusqu'à présent, le `config/environment.js` n'est pas automatiquement rechargé.
+
+### Génération d'un composant avec une classe de composant
+
+Avec la clé API Mapbox en place, générons un nouveau composant pour notre carte.
+
+```bash
+$ ember generate component map --with-component-class
+installing component
+  create app/components/map.js
+  create app/components/map.hbs
+installing component-test
+  create tests/integration/components/map-test.js
+```
+
+### Paramétrage des composants avec des arguments
+
+Commençons par notre fichier JavaScript :
+
+```js
+//app/components/map.js
+import Component from '@glimmer/component';
+import ENV from 'super-rentals/config/environment';
+
+export default class MapComponent extends Component {
+  get token() {
+    return encodeURIComponent(ENV.MAPBOX_ACCESS_TOKEN);
+  }
+}
+```
+
+Ici, nous importons le jeton d'accès à partir du fichier de configuration et le renvoyons à partir d'un getter de token. Cela nous permet d'accéder à notre jeton par `this.token` dans le composant `MapComponent` de la classe et dans le modèle du composant. Il est également important d' encoder le jeton en URL , juste au cas où il contiendrait des caractères spéciaux qui ne sont pas sécurisés pour les URL.

@@ -816,3 +816,38 @@ module('Integration | Component | map', function (hooks) {
 ```
 
 Notez que l' assistant `hasAttribute` de test de `qunit-dom` prend en charge l'utilisation d' expressions régulières . Nous avons utilisé cette fonctionnalité pour confirmer que l' attribut `src` commence par https://api.mapbox.com/, au lieu d'exiger qu'il corresponde exactement à une chaîne. Cela nous permet d'être raisonnablement sûr que le code fonctionne correctement, sans être trop détaillé dans nos tests
+
+Mise en place dans le template :
+
+```js
+//app/components/rental.hbs
+<article class="rental">
+  <Rental::Image
+    src="https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg"
+    alt="A picture of Grand Old Mansion"
+  />
+  <div class="details">
+    <h3>Grand Old Mansion</h3>
+    <div class="detail owner">
+      <span>Owner:</span> Veruca Salt
+    </div>
+    <div class="detail type">
+      <span>Type:</span> Standalone
+    </div>
+    <div class="detail location">
+      <span>Location:</span> San Francisco
+    </div>
+    <div class="detail bedrooms">
+      <span>Number of bedrooms:</span> 15
+    </div>
+  </div>
+  <Map
+    @lat="37.7749"
+    @lng="-122.4194"
+    @zoom="9"
+    @width="150"
+    @height="150"
+    alt="A map of Grand Old Mansion"
+  />
+</article>
+```

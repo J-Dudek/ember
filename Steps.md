@@ -695,3 +695,29 @@ export default class MapComponent extends Component {
 ```
 
 Ici, nous importons le jeton d'accès à partir du fichier de configuration et le renvoyons à partir d'un getter de token. Cela nous permet d'accéder à notre jeton par `this.token` dans le composant `MapComponent` de la classe et dans le modèle du composant. Il est également important d' encoder le jeton en URL , juste au cas où il contiendrait des caractères spéciaux qui ne sont pas sécurisés pour les URL.
+
+### Interpolation des valeurs dans les templates
+
+Passons maintenant du fichier JavaScript au modèle :
+
+```js
+//app/components/map.hbs
+<div class="map">
+  <img
+    alt="Map image at coordinates {{@lat}},{{@lng}}"
+    ...attributes
+    src="https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/{{@lng}},{{@lat}},{{@zoom}}/{{@width}}x{{@height}}@2x?access_token={{this.token}}"
+    width={{@width}} height={{@height}}
+  >
+</div>
+```
+
+Premièrement, nous avons un élément conteneur à des fins de style.
+
+Ensuite, nous avons une balise `<img>` pour demander et rendre l'image de carte statique à partir de Mapbox.
+
+Notre modèle contient plusieurs valeurs qui n'existent pas encore `@lat`— `@lng`, `@zoom`, `@width`, et `@height`. Ce sont les arguments du composant `<Map>` que nous fournirons lors de son invocation.
+
+En paramétrant notre composant à l'aide d'arguments, nous avons créé un composant réutilisable qui peut être invoqué à partir de différentes parties de l'application et personnalisé pour répondre aux besoins de ces contextes spécifiques. Nous avons déjà vu cela en action lors de l'utilisation du comoposant `<LinkTo>` plus tôt ; nous devions spécifier un argument `@route` pour qu'il sache vers quelle page naviguer.
+
+Nous avons fourni une valeur par défaut raisonnable pour l' altattribut en fonction des valeurs des arguments `@lat` et `@lng`. Vous remarquerez peut-être que nous interpolons directement les valeurs dans la valeur `alt` de l' attribut. Ember concaténera automatiquement ces valeurs interpolées en une valeur de chaîne finale pour nous, y compris en effectuant tout échappement HTML nécessaire.

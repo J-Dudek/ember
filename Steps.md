@@ -523,3 +523,49 @@ export default class RentalImageComponent extends Component {
   isLarge = false;
 }
 ```
+
+### Gestion de l'état avec les propriétés suivies
+
+Modifions notre classe pour ajouter une méthode pour basculer la taille :
+
+```js
+//app/components/rental/image.js
+import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
+import { action } from '@ember/object';
+
+export default class RentalImageComponent extends Component {
+  @tracked isLarge = false;
+
+  @action toggleSize() {
+    this.isLarge = !this.isLarge;
+  }
+}
+```
+
+`@tracked` : Cette annotation indique à Ember de surveiller cette variable pour les mises à jour. Chaque fois que la valeur de cette variable change, Ember restituera automatiquement tous les modèles qui dépendent de sa valeur.
+
+Dans notre cas, chaque fois que nous attribuons une nouvelle valeur à this.isLarge, l'annotation `@tracked` obligera Ember à réévaluer le block conditionnel `{{#if this.isLarge}}` dans notre modèle et basculera entre les deux blocs en conséquence.
+
+Avec cela, il est temps de câbler cela dans le modèle :
+
+```js
+//app/components/rental/image.hbs
+{{#if this.isLarge}}
+<button type="button" class="image large" {{on "click" this.toggleSize}}>
+    <img ...attributes>
+    <small>View Smaller</small>
+</button>
+{{else}}
+<button type="button" class="image" {{on "click" this.toggleSize}}>
+    <img ...attributes>
+    <small>View Larger</small>
+</button>
+{{/if}}
+```
+
+Premièrement, puisque nous voulions rendre notre composant interactif, nous avons basculé la balise conteneur de `<div>` à `<button>` (ceci est important pour des raisons d'accessibilité). En utilisant la balise sémantique correcte, nous obtiendrons également la focalisation et la gestion des interactions au clavier "gratuitement".
+
+Ensuite, nous avons utilisé le modificateur `{{on}}` pour l'attacher en `this.toggleSize` tant que gestionnaire de clic sur le bouton.
+
+Avec cela, nous avons créé notre premier composant interactif .

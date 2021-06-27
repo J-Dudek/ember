@@ -601,3 +601,40 @@ test('clicking on the component toggles its size', async function (assert) {
     assert.dom('.image small').hasText('View Larger');
   });
 ```
+
+### Nettoyage
+
+Nettoyons notre modèle avant de continuer. Nous avons introduit beaucoup de duplications lorsque nous avons ajouté le conditionnel dans le modèle. Si on regarde de près, les seules choses qui diffèrent entre les deux blocs sont :
+
+La présence de la classe CSS "large" sur la balise `<button>`.
+Le texte "Afficher plus grand" et "Afficher plus petit".
+
+Ces changements sont profondément enfouis dans la grande quantité de code dupliqué. Nous pouvons réduire la duplication en utilisant une expression `{{if}}` à la place :
+
+- Étape 1 :
+  La version d'expression de `{{if}}` prend deux arguments. Le premier argument est la condition. Le deuxième argument est l'expression qui doit être évaluée si la condition est vraie.
+
+```js
+//app/components/rental/image.hbs
+<button type="button" class="image {{if this.isLarge " large"}}" {{on "click" this.toggleSize}}>
+    <img ...attributes>
+    {{#if this.isLarge}}
+    <small>View Smaller</small>
+    {{else}}
+    <small>View Larger</small>
+    {{/if}}
+</button>
+```
+
+- Étape 2:
+  Facultativement, `{{if}}`peut prendre un troisième argument pour l'évaluation de l'expression si la condition est fausse. Cela signifie que nous pourrions réécrire l'étiquette du bouton comme suit :
+
+```js
+//app/components/rental/image.hbs
+<button type="button" class="image {{if this.isLarge " large"}}" {{on "click" this.toggleSize}}>
+    <img ...attributes>
+    <small>View {{if this.isLarge "Smaller" "Larger"}}</small>
+</button>
+```
+
+Qu'il s'agisse ou non d'une amélioration de la clarté de notre code est principalement une question de goût. Quoi qu'il en soit, nous avons considérablement réduit la duplication dans notre code et fait ressortir les éléments logiques importants du reste.

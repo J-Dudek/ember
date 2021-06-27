@@ -569,3 +569,35 @@ Premièrement, puisque nous voulions rendre notre composant interactif, nous avo
 Ensuite, nous avons utilisé le modificateur `{{on}}` pour l'attacher en `this.toggleSize` tant que gestionnaire de clic sur le bouton.
 
 Avec cela, nous avons créé notre premier composant interactif .
+
+### Ajout du test sur le clic
+
+```js
+//tests/intégration/composants/location/image-test.js
+
+...
+
+test('clicking on the component toggles its size', async function (assert) {
+    await render(hbs`
+      <Rental::Image
+        src="/assets/images/teaching-tomster.png"
+        alt="Teaching Tomster"
+      />
+    `);
+
+    assert.dom('button.image').exists();
+
+    assert.dom('.image').doesNotHaveClass('large');
+    assert.dom('.image small').hasText('View Larger');
+
+    await click('button.image');
+
+    assert.dom('.image').hasClass('large');
+    assert.dom('.image small').hasText('View Smaller');
+
+    await click('button.image');
+
+    assert.dom('.image').doesNotHaveClass('large');
+    assert.dom('.image small').hasText('View Larger');
+  });
+```

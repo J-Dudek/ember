@@ -648,3 +648,14 @@ Mapbox fournit une API d'images de carte statique , qui sert des images de carte
 Si vous êtes curieux, vous pouvez explorer les options disponibles sur Mapbox en utilisant le terrain de jeu interactif .
 
 Une fois que vous vous êtes inscrit au service, récupérez votre jeton public par défaut et collez-le dans ```config/environment.js``` :
+```js
+...
+
+if (environment === 'production') {
+    // here you can enable a production-specific feature
+  }
+  ENV.MAPBOX_ACCESS_TOKEN =
+    'Mettre son token ici ;)';
+  return ENV;
+};
+```

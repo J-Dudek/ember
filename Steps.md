@@ -721,3 +721,98 @@ Notre modèle contient plusieurs valeurs qui n'existent pas encore `@lat`— `@l
 En paramétrant notre composant à l'aide d'arguments, nous avons créé un composant réutilisable qui peut être invoqué à partir de différentes parties de l'application et personnalisé pour répondre aux besoins de ces contextes spécifiques. Nous avons déjà vu cela en action lors de l'utilisation du comoposant `<LinkTo>` plus tôt ; nous devions spécifier un argument `@route` pour qu'il sache vers quelle page naviguer.
 
 Nous avons fourni une valeur par défaut raisonnable pour l' altattribut en fonction des valeurs des arguments `@lat` et `@lng`. Vous remarquerez peut-être que nous interpolons directement les valeurs dans la valeur `alt` de l' attribut. Ember concaténera automatiquement ces valeurs interpolées en une valeur de chaîne finale pour nous, y compris en effectuant tout échappement HTML nécessaire.
+
+### Overriding des attributs HTML dans `...attributes`
+
+Ensuite, nous utilisons `...attributes` pour personnaliser davantage la balise `<img>`, par exemple en passant des attributs supplémentaires tels que `class` , ainsi qu'en remplaçant notre altattribut par défaut par un attribut plus spécifique ou plus convivial.
+
+La commande est importante ici ! Ember applique les attributs dans l'ordre dans lequel ils apparaissent. En attribuant d'abord l' altattribut par défaut ( avant ...attributes est appliqué), nous offrons explicitement à l'invocateur la possibilité de fournir un altattribut plus personnalisé en fonction de son cas d'utilisation.
+
+Étant donné que l' attribut `alt` transmis (s'il existe) apparaîtra après le nôtre, il remplacera la valeur que nous avons spécifiée. D'un autre côté, il est important que nous attribuions `src`, `width`, et `height` aprés `...attributes`, afin qu'ils ne soient pas accidentellement écrasés par l'invocateur.
+
+L' attribut `src` interpole tous les paramètres requis dans le format d'URL pour l' API d'image de carte statique de Mapbox , y compris le jeton d'accès avec échappement d'URL de `this.token`.
+
+Enfin, puisque nous utilisons l' image retina `@2x`, nous devons spécifier les attributs `width` et `height`. Sinon, le rendu `<img>` sera deux fois plus grand que ce à quoi nous nous attendions !
+
+Nous venons d'ajouter beaucoup de comportement dans un seul composant, alors écrivons quelques tests ! En particulier, nous devons nous assurer d'avoir une couverture de test pour le comportement des attributs HTML prioritaires dont nous avons parlé ci-dessus.
+
+```js
+//tests/integration/components/map-test.js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render, find } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+import ENV from 'super-rentals/config/environment';
+
+module('Integration | Component | map', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders a map image for the specified parameters', async function (assert) {
+    await render(hbs`<Map
+      @lat="37.7797"
+      @lng="-122.4184"
+      @zoom="10"
+      @width="150"
+      @height="120"
+    />`);
+
+    assert
+      .dom('.map img')
+      .exists()
+      .hasAttribute('alt', 'Map image at coordinates 37.7797,-122.4184')
+      .hasAttribute('src')
+      .hasAttribute('width', '150')
+      .hasAttribute('height', '120');
+    let { src } = find('.map img');
+    let token = encodeURIComponent(ENV.MAPBOX_ACCESS_TOKEN);
+    assert.ok(
+      src.includes('-122.4184,37.7797,10'),
+      'the src should include the lng,lat,zoom parameter'
+    );
+
+    assert.ok(
+      src.includes('150x120@2x'),
+      'the src should include the width,height and @2x parameter'
+    );
+
+    assert.ok(
+      src.includes(`access_token=${token}`),
+      'the src should include the escaped access token'
+    );
+  });
+
+  test('the default alt attribute can be overridden', async function (assert) {
+    await render(hbs`<Map
+      @lat="37.7797"
+      @lng="-122.4184"
+      @zoom="10"
+      @width="150"
+      @height="120"
+      alt="A map of San Francisco"
+    />`);
+
+    assert.dom('.map img').hasAttribute('alt', 'A map of San Francisco');
+  });
+
+  test('the src, width and height attributes cannot be overridden', async function (assert) {
+    await render(hbs`<Map
+      @lat="37.7797"
+      @lng="-122.4184"
+      @zoom="10"
+      @width="150"
+      @height="120"
+      src="/assets/images/teaching-tomster.png"
+      width="200"
+      height="300"
+    />`);
+
+    assert
+      .dom('.map img')
+      .hasAttribute('src', /^https:\/\/api\.mapbox\.com\//)
+      .hasAttribute('width', '150')
+      .hasAttribute('height', '120');
+  });
+});
+```
+
+Notez que l' assistant `hasAttribute` de test de `qunit-dom` prend en charge l'utilisation d' expressions régulières . Nous avons utilisé cette fonctionnalité pour confirmer que l' attribut `src` commence par https://api.mapbox.com/, au lieu d'exiger qu'il corresponde exactement à une chaîne. Cela nous permet d'être raisonnablement sûr que le code fonctionne correctement, sans être trop détaillé dans nos tests

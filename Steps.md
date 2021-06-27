@@ -638,3 +638,13 @@ Ces changements sont profondément enfouis dans la grande quantité de code dupl
 ```
 
 Qu'il s'agisse ou non d'une amélioration de la clarté de notre code est principalement une question de goût. Quoi qu'il en soit, nous avons considérablement réduit la duplication dans notre code et fait ressortir les éléments logiques importants du reste.
+
+## Étape 8 : Reusables Components
+### Gestion des configurations au niveau de l'application
+Nous utiliserons l' API [Mapbox](https://www.mapbox.com/) pour générer des cartes pour nos propriétés locatives. Vous pouvez vous inscrire gratuitement et sans carte de crédit.
+
+Mapbox fournit une API d'images de carte statique , qui sert des images de carte au format PNG. Cela signifie que nous pouvons générer l'URL appropriée pour les paramètres que nous voulons et afficher la carte à l'aide d'une balise ```<img>``` standard . Génial!
+
+Si vous êtes curieux, vous pouvez explorer les options disponibles sur Mapbox en utilisant le terrain de jeu interactif .
+
+Une fois que vous vous êtes inscrit au service, récupérez votre jeton public par défaut et collez-le dans ```config/environment.js``` :

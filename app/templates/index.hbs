@@ -6,32 +6,10 @@
 </Jumbo>
 <div class="rentals">
     <ul class="results">
+        {{#each @model as |rental|}}
         <li>
-            <Rental @rental={{@model}} />
+            <Rental @rental={{rental}} />
         </li>
-        <li>
-            <Rental @rental={{@model}} />
-        </li>
-        <li>
-            <Rental @rental={{@model}} />
-        </li>
-        <li>
-            <Rental @rental={{@model}} />
-        </li>
-        <li>
-            <Rental @rental={{@model}} />
-        </li>
-        <li>
-            <Rental @rental={{@model}} />
-        </li>
-        <li>
-            <Rental @rental={{@model}} />
-        </li>
-        <li>
-            <Rental @rental={{@model}} />
-        </li>
-        <li>
-            <Rental @rental={{@model}} />
-        </li>
+        {{/each}}
     </ul>
 </div>

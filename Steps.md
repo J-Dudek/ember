@@ -1148,3 +1148,62 @@ module('Integration | Component | rental', function (hooks) {
   });
 });
 ```
+
+### Moock d'appel API
+
+On va ici simuler l'appel d'une API afin de rentre tout ça réaliste et dynamique.
+
+Nous ajoutons des `json` afin de simuler l'appel à une API extérieure et modifions le fichier `ìndex.js` afin de manipuler ces données:
+
+```js
+//app/routes/index.js
+import Route from '@ember/routing/route';
+
+const COMMUNITY_CATEGORIES = ['Condo', 'Townhouse', 'Apartment'];
+
+export default class IndexRoute extends Route {
+  async model() {
+    let response = await fetch('/api/rentals.json');
+    let { data } = await response.json();
+
+    return data.map((model) => {
+      let { attributes } = model;
+      let type;
+
+      if (COMMUNITY_CATEGORIES.includes(attributes.category)) {
+        type = 'Community';
+      } else {
+        type = 'Standalone';
+      }
+
+      return { type, ...attributes };
+    });
+  }
+}
+```
+
+Après avoir analysé les données JSON, nous avons extrait l' objet `attributes` imbriqué , rajouté l'attribut `type` manquant manuellement, puis l' avons renvoyé à partir du hook de modèle. De cette façon, le reste de notre application n'aura aucune idée que cette différence a déjà existé.
+
+Afin que le template affiche toutes le données nou le modifions également :
+
+```js
+//app/templates/index.hbs
+<Jumbo>
+    <h2>Welcome to Super Rentals!</h2>
+    <p>We hope you find exactly what you're looking for in a place to stay.</p>
+    <LinkTo @route="about" class="button">About Us</LinkTo>
+</Jumbo>
+<div class="rentals">
+    <ul class="results">
+        {{#each @model as |rental|}}
+        <li>
+            <Rental @rental={{rental}} />
+        </li>
+        {{/each}}
+    </ul>
+</div>
+```
+
+Nous pouvons utiliser la syntaxe `{{#each}}...{{/each}}` pour itérer et parcourir le tableau renvoyé par le hook de modèle. Pour chaque itération dans le tableau, pour chaque élément du tableau, nous afficherons une fois le bloc qui lui est transmis. Dans notre cas, le bloc est notre comopasant `<Rental>` , entouré de balises `<li>`.
+
+A l' intérieur du bloc , nous avons accès à l'élément de l'itération avec la variable `{{rental}}`. Mais pourquoi rental? Eh bien, parce que nous l'avons nommé ainsi ! Cette variable provient de la déclaration `as |rental|` de la boucle `each`. Nous aurions pu tout aussi bien l'appeler autrement, comme `as |koala|`, auquel cas nous aurions dû accéder à l'élément courant via la variable `{{koala}}`.

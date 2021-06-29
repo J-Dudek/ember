@@ -1000,3 +1000,50 @@ En utilisant l'API `this.setProperties` de test spéciale , nous pouvons transme
 Notez qu'ici la valeur de `this` ne fait pas référence à l'instance du composant. Nous n'accédons ni ne modifions directement les états internes du composant.
 
 Au lieu de cela, `this` fait référence à un objet de contexte de test spécial , auquel nous avons accès à l'intérieur de l'assistant `render`. Cela nous fournit un "pont" pour passer des valeurs dynamiques, sous forme d'arguments, dans notre invocation du composant. Cela nous permet de mettre à jour ces valeurs au besoin à partir de la fonction de test.
+
+## Étape 9 : Working with data
+
+### Fichier de route
+
+Jusqu'à présent, nous avons tout codé en dur dans notre composant `<Rental>`. Mais ce n'est probablement pas très durable, puisque finalement, nous voulons plutôt que nos données proviennent d'un serveur. Allons de l'avant et déplaçons certaines de ces valeurs codées en dur hors du composant en vue de cela.
+
+Nous voulons commencer à travailler vers un endroit où nous pouvons éventuellement récupérer les données du serveur, puis restituer les données demandées sous forme de contenu dynamique à partir des modèles. Pour ce faire, nous aurons besoin d'un endroit où nous pouvons écrire le code pour récupérer les données et les charger dans les routes.
+
+Dans Ember, les fichiers de route sont l'endroit pour le faire. Nous n'en avons pas encore eu besoin, car toutes nos routes ne font essentiellement que rendre des pages statiques jusqu'à présent, mais nous sommes sur le point de changer cela.
+
+Commençons par créer un fichier de route pour la route d'index. Nous allons créer un nouveau fichier `app/routes/index.js` avec le contenu suivant :
+
+```js
+import Route from '@ember/routing/route'; //<- import classe route
+
+export default class IndexRoute extends Route {
+  async model() {
+    return {
+      title: 'Grand Old Mansion',
+      owner: 'Veruca Salt',
+      city: 'San Francisco',
+      location: {
+        lat: 37.7749,
+        lng: -122.4194,
+      },
+      category: 'Estate',
+      type: 'Standalone',
+      bedrooms: 15,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg',
+      description:
+        'This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests.',
+    };
+  }
+}
+```
+
+Nous importons la classe Route dans le fichier. Cette classe est utilisée comme point de départ pour ajouter des fonctionnalités à un itinéraire, comme le chargement de données.
+
+Ensuite, nous étendons la classe Route dans notre propre `IndexRoute` , que nous avons également `export` pour que le reste de l'application puisse l'utiliser.
+
+ Nous avons implémenté une méthode asynchrone appelée ```model()```. Cette méthode est également connue sous le nom de ```model hook```.
+
+  Ember appellera automatiquement ce hook lors de la saisie d'un itinéraire, afin que vous puissiez avoir la possibilité d'exécuter votre propre code pour obtenir les données dont vous avez besoin. L'objet renvoyé par ce hook est connu comme le modèle de l'itinéraire.
+
+  Étant donné que la récupération de données est généralement une opération asynchrone, le hook de modèle est marqué comme async. Cela nous donne la possibilité d'utiliser le mot-clé await pour attendre la fin des opérations de récupération des données. (Dans cette étape on laisse les données en dur et nous reviendrons sur le await plus tard).

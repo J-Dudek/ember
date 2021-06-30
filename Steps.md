@@ -1266,9 +1266,81 @@ Maintenant que nous avons cet itinéraire en place, nous pouvons mettre à jour 
 
 Puisque nous savons que nous sommes liés à l' itinéraire `rental` que nous venons de créer, nous savons également que cet itinéraire nécessite un segment dynamique. Ainsi, nous devons passer un argument `@model` pour que le composant `<LinkTo>` puisse générer l'URL appropriée pour ce modèle.
 
-Si nous regardons les données JSON (```/public/api/rentals.json```), nous pouvons voir que l' ```id``` est inclus juste à côté de la clé ```attributes```. Nous avons donc accès à ces données ; le seul problème est que nous ne l'incluons pas dans notre modèle ! Modifions notre hook de modèle dans la route ```index``` afin qu'il inclue le fichier id.
+Si nous regardons les données JSON (`/public/api/rentals.json`), nous pouvons voir que l' `id` est inclus juste à côté de la clé `attributes`. Nous avons donc accès à ces données ; le seul problème est que nous ne l'incluons pas dans notre modèle ! Modifions notre hook de modèle dans la route `index` afin qu'il inclue le fichier id.
+
 ```js
 //app/routes/index.js
+import Route from '@ember/routing/route';
 
+const COMMUNITY_CATEGORIES = ['Condo', 'Townhouse', 'Apartment'];
 
+export default class IndexRoute extends Route {
+  async model() {
+    let response = await fetch('/api/rentals.json');
+    let { data } = await response.json();
+
+    return data.map((model) => {
+      let { id, attributes } = model;
+      let type;
+
+      if (COMMUNITY_CATEGORIES.includes(attributes.category)) {
+        type = 'Community';
+      } else {
+        type = 'Standalone';
+      }
+
+      return { id, type, ...attributes };
+    });
+  }
+}
+```
+
+### Mise à jour des tests avec liens dynamique
+
+```js
+//tests/intégration/composants/rental-test.js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+
+module('Integration | Component | rental', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders information about a rental property', async function (assert) {
+    this.setProperties({
+      rental: {
+        id: 'grand-old-mansion',
+        title: 'Grand Old Mansion',
+        owner: 'Veruca Salt',
+        city: 'San Francisco',
+        location: {
+          lat: 37.7749,
+          lng: -122.4194,
+        },
+        category: 'Estate',
+        type: 'Standalone',
+        bedrooms: 15,
+        image:
+          'https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg',
+        description:
+          'This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests.',
+      },
+    });
+
+    await render(hbs`<Rental @rental={{this.rental}} />`);
+
+    assert.dom('article').hasClass('rental');
+    assert.dom('article h3').hasText('Grand Old Mansion');
+    assert
+      .dom('article h3 a')
+      .hasAttribute('href', '/rentals/grand-old-mansion');
+    assert.dom('article .detail.owner').includesText('Veruca Salt');
+    assert.dom('article .detail.type').includesText('Standalone');
+    assert.dom('article .detail.location').includesText('San Francisco');
+    assert.dom('article .detail.bedrooms').includesText('15');
+    assert.dom('article .image').exists();
+    assert.dom('article .map').exists();
+  });
+});
 ```

@@ -1207,3 +1207,22 @@ Afin que le template affiche toutes le données nou le modifions également :
 Nous pouvons utiliser la syntaxe `{{#each}}...{{/each}}` pour itérer et parcourir le tableau renvoyé par le hook de modèle. Pour chaque itération dans le tableau, pour chaque élément du tableau, nous afficherons une fois le bloc qui lui est transmis. Dans notre cas, le bloc est notre comopasant `<Rental>` , entouré de balises `<li>`.
 
 A l' intérieur du bloc , nous avons accès à l'élément de l'itération avec la variable `{{rental}}`. Mais pourquoi rental? Eh bien, parce que nous l'avons nommé ainsi ! Cette variable provient de la déclaration `as |rental|` de la boucle `each`. Nous aurions pu tout aussi bien l'appeler autrement, comme `as |koala|`, auquel cas nous aurions dû accéder à l'élément courant via la variable `{{koala}}`.
+
+## Étape 10 : Dynamic Segment
+Nous allons créer une page par location, pour cela commençons à ajouter la route au routeur :
+```js
+
+import EmberRouter from '@ember/routing/router';
+import config from 'super-rentals/config/environment';
+
+export default class Router extends EmberRouter {
+  location = config.locationType;
+  rootURL = config.rootURL;
+}
+
+Router.map(function () {
+  this.route('about');
+  this.route('contact', { path: '/getting-in-touch' });
+  this.route('rental', { path: '/rentals/:rental_id' });
+});
+```

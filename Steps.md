@@ -1344,3 +1344,29 @@ module('Integration | Component | rental', function (hooks) {
   });
 });
 ```
+### Creation de la route dynamique ```Rental```
+```js
+//app/routes/rental.js
+import Route from '@ember/routing/route';
+
+const COMMUNITY_CATEGORIES = ['Condo', 'Townhouse', 'Apartment'];
+
+export default class RentalRoute extends Route {
+    async model(params) {
+        let response = await fetch(`/api/rentals/${params.rental_id}.json`);
+        let { data } = await response.json();
+
+        let { id, attributes } = data;
+        let type;
+
+        if (COMMUNITY_CATEGORIES.includes(attributes.category)) {
+            type = 'Community';
+        } else {
+            type = 'Standalone';
+        }
+
+        return { id, type, ...attributes };
+    }
+}
+```
+Contrairement à la route ```Index```, nous avons un objet ```params``` passé dans notre hook de modèle. En effet, nous devons extraire nos données du ```/api/rentals/${id}.json``` cible, et non du ```/api/rentals.json``` global que nous utilisions auparavant. Nous savons déjà que les points de terminaison de location individuels récupèrent un seul objet de location, plutôt qu'un tableau d'entre eux, et que l'itinéraire utilise un segment dynamique ```/:rental_id```  pour déterminer quel objet de location nous essayons de récupérer sur le serveur.

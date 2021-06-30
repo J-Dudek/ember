@@ -1209,9 +1209,13 @@ Nous pouvons utiliser la syntaxe `{{#each}}...{{/each}}` pour itérer et parcour
 A l' intérieur du bloc , nous avons accès à l'élément de l'itération avec la variable `{{rental}}`. Mais pourquoi rental? Eh bien, parce que nous l'avons nommé ainsi ! Cette variable provient de la déclaration `as |rental|` de la boucle `each`. Nous aurions pu tout aussi bien l'appeler autrement, comme `as |koala|`, auquel cas nous aurions dû accéder à l'élément courant via la variable `{{koala}}`.
 
 ## Étape 10 : Dynamic Segment
-Nous allons créer une page par location, pour cela commençons à ajouter la route au routeur :
-```js
 
+### Ajout route dynamique au routeur
+
+Nous allons créer une page par location, pour cela commençons à ajouter la route au routeur :
+
+```js
+//app/router.js
 import EmberRouter from '@ember/routing/router';
 import config from 'super-rentals/config/environment';
 
@@ -1225,4 +1229,46 @@ Router.map(function () {
   this.route('contact', { path: '/getting-in-touch' });
   this.route('rental', { path: '/rentals/:rental_id' });
 });
+```
+
+### Cr&ation de lien dynamique
+
+Maintenant que nous avons cet itinéraire en place, nous pouvons mettre à jour notre composant `<Rental>` pour qu'il soit réellement lié à chacun de nos biens locatifs détaillés !
+
+```js
+//app/components/rental.hbs
+<article class="rental">
+    <Rental::Image src={{@rental.image}}
+    alt="A picture of {{@rental.title}}" />
+    <div class="details">
+        <h3>
+            <LinkTo @route="rental" @model={{@rental}}>
+                {{@rental.title}}
+            </LinkTo>
+        </h3>
+        <div class="detail owner">
+            <span>Owner:</span> {{@rental.owner}}
+        </div>
+        <div class="detail type">
+            <span>Type:</span> {{@rental.type}}
+        </div>
+        <div class="detail location">
+            <span>Location:</span> {{@rental.city}}
+        </div>
+        <div class="detail bedrooms">
+            <span>Number of bedrooms:</span> {{@rental.bedrooms}}
+        </div>
+    </div>
+    <Map @lat={{@rental.location.lat}}
+    @lng={{@rental.location.lng}} @zoom="9" @width="150" @height="150" alt="A map of {{@rental.title}}" />
+</article>
+```
+
+Puisque nous savons que nous sommes liés à l' itinéraire `rental` que nous venons de créer, nous savons également que cet itinéraire nécessite un segment dynamique. Ainsi, nous devons passer un argument `@model` pour que le composant `<LinkTo>` puisse générer l'URL appropriée pour ce modèle.
+
+Si nous regardons les données JSON (```/public/api/rentals.json```), nous pouvons voir que l' ```id``` est inclus juste à côté de la clé ```attributes```. Nous avons donc accès à ces données ; le seul problème est que nous ne l'incluons pas dans notre modèle ! Modifions notre hook de modèle dans la route ```index``` afin qu'il inclue le fichier id.
+```js
+//app/routes/index.js
+
+
 ```

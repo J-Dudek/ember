@@ -1344,7 +1344,9 @@ module('Integration | Component | rental', function (hooks) {
   });
 });
 ```
-### Creation de la route dynamique ```Rental```
+
+### Creation de la route dynamique `Rental`
+
 ```js
 //app/routes/rental.js
 import Route from '@ember/routing/route';
@@ -1352,21 +1354,100 @@ import Route from '@ember/routing/route';
 const COMMUNITY_CATEGORIES = ['Condo', 'Townhouse', 'Apartment'];
 
 export default class RentalRoute extends Route {
-    async model(params) {
-        let response = await fetch(`/api/rentals/${params.rental_id}.json`);
-        let { data } = await response.json();
+  async model(params) {
+    let response = await fetch(`/api/rentals/${params.rental_id}.json`);
+    let { data } = await response.json();
 
-        let { id, attributes } = data;
-        let type;
+    let { id, attributes } = data;
+    let type;
 
-        if (COMMUNITY_CATEGORIES.includes(attributes.category)) {
-            type = 'Community';
-        } else {
-            type = 'Standalone';
-        }
-
-        return { id, type, ...attributes };
+    if (COMMUNITY_CATEGORIES.includes(attributes.category)) {
+      type = 'Community';
+    } else {
+      type = 'Standalone';
     }
+
+    return { id, type, ...attributes };
+  }
 }
 ```
-Contrairement à la route ```Index```, nous avons un objet ```params``` passé dans notre hook de modèle. En effet, nous devons extraire nos données du ```/api/rentals/${id}.json``` cible, et non du ```/api/rentals.json``` global que nous utilisions auparavant. Nous savons déjà que les points de terminaison de location individuels récupèrent un seul objet de location, plutôt qu'un tableau d'entre eux, et que l'itinéraire utilise un segment dynamique ```/:rental_id```  pour déterminer quel objet de location nous essayons de récupérer sur le serveur.
+
+Contrairement à la route `Index`, nous avons un objet `params` passé dans notre hook de modèle. En effet, nous devons extraire nos données du `/api/rentals/${id}.json` cible, et non du `/api/rentals.json` global que nous utilisions auparavant. Nous savons déjà que les points de terminaison de location individuels récupèrent un seul objet de location, plutôt qu'un tableau d'entre eux, et que l'itinéraire utilise un segment dynamique `/:rental_id` pour déterminer quel objet de location nous essayons de récupérer sur le serveur.
+
+### Affichage des details du modèle avec un paramètre
+
+Ensuite, créons un composant `<Rental::Detailed>` :
+
+```bash
+$ ember generate component rental/detailed
+installing component
+  create app/components/rental/detailed.hbs
+  skip app/components/rental/detailed.js
+  tip to add a class, run `ember generate component-class rental/detailed`
+installing component-test
+  create tests/integration/components/rental/detailed-test.js
+```
+
+et complétons le :
+
+```hbs
+<!-- app/components/rental/detailed.hbs -->
+<Jumbo>
+  <h2>{{@rental.title}}</h2>
+  <p>Nice find! This looks like a nice place to stay near {{@rental.city}}.</p>
+  <a
+    href='#'
+    target='_blank'
+    rel='external nofollow noopener noreferrer'
+    class='share button'
+  >
+    Share on Twitter
+  </a>
+</Jumbo>
+
+<article class='rental detailed'>
+  <Rental::Image src={{@rental.image}} alt='A picture of {{@rental.title}}' />
+
+  <div class='details'>
+    <h3>About {{@rental.title}}</h3>
+
+    <div class='detail owner'>
+      <span>Owner:</span>
+      {{@rental.owner}}
+    </div>
+    <div class='detail type'>
+      <span>Type:</span>
+      {{@rental.type}}
+      –
+      {{@rental.category}}
+    </div>
+    <div class='detail location'>
+      <span>Location:</span>
+      {{@rental.city}}
+    </div>
+    <div class='detail bedrooms'>
+      <span>Number of bedrooms:</span>
+      {{@rental.bedrooms}}
+    </div>
+    <div class='detail description'>
+      <p>{{@rental.description}}</p>
+    </div>
+  </div>
+
+  <Map
+    @lat={{@rental.location.lat}}
+    @lng={{@rental.location.lng}}
+    @zoom='12'
+    @width='894'
+    @height='600'
+    alt='A map of {{@rental.title}}'
+    class='large'
+  />
+</article>
+```
+Ce composant est similaire à notre composant ```<Rental>```, à l'exception des différences suivantes.
+- Il affiche une bannière avec un bouton de partage en haut (Implémentation à venir plus tard).
+- Il affiche une image plus grande par défaut, avec des informations détaillées supplémentaires.
+- Il montre une carte plus grande.
+- Il affiche une description.
+

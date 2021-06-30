@@ -1576,8 +1576,50 @@ Commençons par le modèle qui a été généré pour ce composant. Nous avons d
   {{yield}}
 </a>
 ```
-Notez que nous avons ajouté ```...attributes``` à notre balise ```<a>```. Comme nous l'avons appris plus tôt en travaillant sur notre composant ```<Map>```, l'ordre d' ```...attributes``` par rapport aux autres attributs est important. Nous ne voulons pas autoriser ```href```, ```target```, ou ```rel``` d' être remplacés par l'invocateur, nous avons donc spécifié ces attributs après ```...attributes```.
 
-Mais qu'arrive-t-il à l'attrivut ```class```? Eh bien, il s'avère que l' attribut ```class``` est la seule exception à la façon dont ces attributs de composant sont remplacés ! Alors que tous les autres attributs HTML suivent la règle "La dernière écriture gagne", les valeurs de l'attribut ```class``` sont fusionnées (concaténées) à la place. Il y a une bonne raison à cela : cela permet au composant de spécifier les classes dont il a besoin, tout en permettant aux invocateurs du composant d'ajouter librement toutes les classes supplémentaires dont ils ont besoin à des fins de style.
+Notez que nous avons ajouté `...attributes` à notre balise `<a>`. Comme nous l'avons appris plus tôt en travaillant sur notre composant `<Map>`, l'ordre d' `...attributes` par rapport aux autres attributs est important. Nous ne voulons pas autoriser `href`, `target`, ou `rel` d' être remplacés par l'invocateur, nous avons donc spécifié ces attributs après `...attributes`.
 
-Nous avons également un  ```{{yield}}``` à l'intérieur de notre balise ```<a>``` afin que nous puissions personnaliser le texte du lien plus tard lors de l'appel du composant ```<ShareButton>```.
+Mais qu'arrive-t-il à l'attrivut `class`? Eh bien, il s'avère que l' attribut `class` est la seule exception à la façon dont ces attributs de composant sont remplacés ! Alors que tous les autres attributs HTML suivent la règle "La dernière écriture gagne", les valeurs de l'attribut `class` sont fusionnées (concaténées) à la place. Il y a une bonne raison à cela : cela permet au composant de spécifier les classes dont il a besoin, tout en permettant aux invocateurs du composant d'ajouter librement toutes les classes supplémentaires dont ils ont besoin à des fins de style.
+
+Nous avons également un `{{yield}}` à l'intérieur de notre balise `<a>` afin que nous puissions personnaliser le texte du lien plus tard lors de l'appel du composant `<ShareButton>`.
+
+### Accéder à l'URL actuelle
+
+```js
+//app/components/share-button.js
+import Component from '@glimmer/component';
+
+const TWEET_INTENT = 'https://twitter.com/intent/tweet';
+
+export default class ShareButtonComponent extends Component {
+  get currentURL() {
+    return window.location.href;
+  }
+
+  get shareURL() {
+    let url = new URL(TWEET_INTENT);
+
+    url.searchParams.set('url', this.currentURL);
+
+    if (this.args.text) {
+      url.searchParams.set('text', this.args.text);
+    }
+
+    if (this.args.hashtags) {
+      url.searchParams.set('hashtags', this.args.hashtags);
+    }
+
+    if (this.args.via) {
+      url.searchParams.set('via', this.args.via);
+    }
+
+    return url;
+  }
+}
+```
+
+La fonctionnalité clé de cette classe est de créer l'URL appropriée pour l'API d'appel Web Twitter, qui est exposée au modèle via le getter`this.shareURL`. Cela implique principalement de "coller" les arguments du composant et de définir les paramètres de requête appropriés sur l'URL résultante. De manière pratique, le navigateur fournit une classe `URL` pratique qui gère l'échappement et la jonction des paramètres de requête pour nous.
+
+L'autre fonctionnalité notable de cette classe concerne l'obtention de l'URL de la page actuelle et son ajout automatique à l'URL d'appel Twitter. Pour ce faire, nous avons défini un getter `currentURL` qui utilisait simplement l' objet global `Locationo` du navigateur , auquel nous pouvions accéder via `window.location`. Entre autres choses, il a une propriété `href` ( window.location.href) qui rapporte l'URL de la page actuelle.
+
+Mettons ce composant à profit en l'invoquant depuis le composant `<Rental::Detailed>` :

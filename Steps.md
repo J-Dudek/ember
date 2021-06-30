@@ -1546,3 +1546,38 @@ Et, dans la logique ajout du test à
   });
 [...]
 ```
+
+## Étape 10 : Service Injection
+
+### Splattributes et l' attributclass
+
+Générons un composant `share-button`
+
+```bash
+$ ember generate component share-button --with-component-class
+installing component
+  create app/components/share-button.js
+  create app/components/share-button.hbs
+installing component-test
+  create tests/integration/components/share-button-test.js
+```
+
+Commençons par le modèle qui a été généré pour ce composant. Nous avons déjà un balisage pour le bouton de partage dans le composant `<Rental::Detailed>` que nous avons créé plus tôt, alors copions-le simplement dans notre nouveau composant `<ShareButton>`.
+
+```hbs
+<!--app/components/share-button.hbs-->
+<a
+  ...attributes
+  href={{this.shareURL}}
+  target='_blank'
+  rel='external nofollow noopener noreferrer'
+  class='share button'
+>
+  {{yield}}
+</a>
+```
+Notez que nous avons ajouté ```...attributes``` à notre balise ```<a>```. Comme nous l'avons appris plus tôt en travaillant sur notre composant ```<Map>```, l'ordre d' ```...attributes``` par rapport aux autres attributs est important. Nous ne voulons pas autoriser ```href```, ```target```, ou ```rel``` d' être remplacés par l'invocateur, nous avons donc spécifié ces attributs après ```...attributes```.
+
+Mais qu'arrive-t-il à l'attrivut ```class```? Eh bien, il s'avère que l' attribut ```class``` est la seule exception à la façon dont ces attributs de composant sont remplacés ! Alors que tous les autres attributs HTML suivent la règle "La dernière écriture gagne", les valeurs de l'attribut ```class``` sont fusionnées (concaténées) à la place. Il y a une bonne raison à cela : cela permet au composant de spécifier les classes dont il a besoin, tout en permettant aux invocateurs du composant d'ajouter librement toutes les classes supplémentaires dont ils ont besoin à des fins de style.
+
+Nous avons également un  ```{{yield}}``` à l'intérieur de notre balise ```<a>``` afin que nous puissions personnaliser le texte du lien plus tard lors de l'appel du composant ```<ShareButton>```.

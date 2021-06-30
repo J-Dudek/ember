@@ -1514,3 +1514,35 @@ module('Integration | Component | rental/detailed', function (hooks) {
 ```
 
 Nous pouvons utiliser le hook `beforeEach` pour partager du code passe-partout, ce qui nous permet d'avoir deux tests qui se concentrent chacun sur un aspect différent et unique du composant.
+
+### Ajout du Template pour affichage
+
+```hbs
+<!-- app/templates/rental.hbs -->
+<Rental::Detailed @rental={{@model}} />
+```
+
+Et, dans la logique ajout du test à
+
+```js
+//tests/acceptation/super-rentals-test.js
+[...]
+ test('viewing the details of a rental property', async function (assert) {
+    await visit('/');
+    assert.dom('.rental').exists({ count: 3 });
+
+    await click('.rental:first-of-type a');
+    assert.equal(currentURL(), '/rentals/grand-old-mansion');
+  });
+
+  test('visiting /rentals/grand-old-mansion', async function (assert) {
+    await visit('/rentals/grand-old-mansion');
+
+    assert.equal(currentURL(), '/rentals/grand-old-mansion');
+    assert.dom('nav').exists();
+    assert.dom('h1').containsText('SuperRentals');
+    assert.dom('h2').containsText('Grand Old Mansion');
+    assert.dom('.rental.detailed').exists();
+  });
+[...]
+```

@@ -1817,3 +1817,11 @@ export default class ShareButtonComponent extends Component {
 Ici, nous avons ajouté la déclaration `@service router;` à notre classe de composant. Cela **_injecte le service de routeur dans le composant, le rendant disponible en tant que fichier `this.router`._** Le service de routeur a une propriété `currentURL`, fournissant l'URL "logique" actuelle telle que vue par le routeur d'Ember. Semblable à l'assistant de test du même nom, il s'agit d'une URL relative, nous devrons donc la joindre `window.location.origin` pour obtenir une URL absolue que nous pouvons partager.
 
 Avec ce changement, tout fonctionne maintenant comme nous l'avions prévu.
+
+### Ember Service vs Variables Globales
+
+Dans Ember, les services jouent un rôle similaire aux variables globales, en ce sens qu'ils sont facilement accessibles par n'importe quelle partie de votre application. Par exemple, nous pouvons injecter n'importe quel service disponible dans les composants, au lieu de les faire passer en argument. Cela permet aux composants profondément imbriqués de "sauter" les couches et d'accéder à des éléments logiquement globaux à l'ensemble de l'application, tels que le routage, l'authentification, les sessions utilisateur, les préférences utilisateur, etc. Sans services, chaque composant devrait passer par beaucoup des mêmes arguments dans chaque composant qu'il invoque.
+
+Une différence majeure entre les services et les variables globales est que les services sont limités à votre application, au lieu de tout le code JavaScript qui s'exécute sur la même page. Cela vous permet d'exécuter plusieurs scripts sur la même page sans interférer les uns avec les autres.
+
+Plus important encore, les services sont conçus pour être facilement échangeables . Dans notre classe de composants, tout ce que nous avons fait était de demander à Ember d'injecter le service nommé `router`, sans spécifier d'où vient ce service. Cela nous permet de remplacer le service de routeur d'Ember par un objet différent au moment de l'exécution.

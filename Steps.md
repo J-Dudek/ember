@@ -1825,3 +1825,145 @@ Dans Ember, les services jouent un rôle similaire aux variables globales, en ce
 Une différence majeure entre les services et les variables globales est que les services sont limités à votre application, au lieu de tout le code JavaScript qui s'exécute sur la même page. Cela vous permet d'exécuter plusieurs scripts sur la même page sans interférer les uns avec les autres.
 
 Plus important encore, les services sont conçus pour être facilement échangeables . Dans notre classe de composants, tout ce que nous avons fait était de demander à Ember d'injecter le service nommé `router`, sans spécifier d'où vient ce service. Cela nous permet de remplacer le service de routeur d'Ember par un objet différent au moment de l'exécution.
+
+### Moock des Services dans les tests
+
+Utilisation de Service dans les tests :
+
+```js
+//tests/intégration/composants/share-button-test.js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+import Service from '@ember/service';
+
+class MockRouterService extends Service {
+  get currentURL() {
+    return '/foo/bar?baz=true#some-section';
+  }
+}
+
+module('Integration | Component | share-button', function (hooks) {
+  setupRenderingTest(hooks);
+
+  hooks.beforeEach(function () {
+    this.owner.register('service:router', MockRouterService);
+  });
+  test('basic usage', async function (assert) {
+    await render(hbs`<ShareButton>Tweet this!</ShareButton>`);
+    assert
+      .dom('a')
+      .hasAttribute('target', '_blank')
+      .hasAttribute('rel', 'external nofollow noopener noreferrer')
+      .hasAttribute(
+        'href',
+        `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+          new URL('/foo/bar?baz=true#some-section', window.location.origin)
+        )}`
+      )
+      .hasClass('share')
+      .hasClass('button')
+      .containsText('Tweet this!');
+  });
+});
+```
+
+Dans ce test de composant, nous avons enregistré notre propre service de routeur avec Ember dans le hook `beforeEach`. Lorsque notre composant est rendu et demande que le service de routeur soit injecté, il obtiendra une instance de notre `MockRouterServic` au lieu du service de routeur intégré.
+
+Il s'agit d'une technique de test assez courante appelée **_mocking ou stubing_** . Notre `MockRouterService` implémente la même interface que le service de routeur intégré – la partie qui nous intéresse de toute façon ; c'est-à-dire qu'il a une propriété `currentURL` qui rapporte l'URL "logique" actuelle. Cela nous permet de fixer l'URL à une valeur prédéterminée, ce qui permet de tester facilement notre composant sans avoir à naviguer vers une autre page. Pour autant que notre composant puisse le dire, nous sommes actuellement sur la page `/foo/bar/baz?some=page#anchor`, car c'est le résultat qu'il obtiendrait en interrogeant le service de routeur.
+
+En utilisant des injections de service et des simulations, Ember nous permet de créer des composants faiblement couplés qui peuvent chacun être testés isolément, tandis que les tests d'acceptation fournissent une couverture de bout en bout qui garantit que ces composants fonctionnent bien ensemble.
+
+Pendant que nous y sommes, ajoutons quelques tests supplémentaires pour les différentes fonctionnalités du composant `<ShareButton>` :
+
+```js
+//tests/intégration/composants/share-button-test.js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render, find } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+import Service from '@ember/service';
+
+class MockRouterService extends Service {
+  get currentURL() {
+    return '/foo/bar?baz=true#some-section';
+  }
+}
+
+module('Integration | Component | share-button', function (hooks) {
+  setupRenderingTest(hooks);
+
+  hooks.beforeEach(function () {
+    this.owner.register('service:router', MockRouterService);
+    this.tweetParam = (param) => {
+      let link = find('a');
+      let url = new URL(link.href);
+      return url.searchParams.get(param);
+    };
+  });
+  test('basic usage', async function (assert) {
+    await render(hbs`<ShareButton>Tweet this!</ShareButton>`);
+    assert
+      .dom('a')
+      .hasAttribute('target', '_blank')
+      .hasAttribute('rel', 'external nofollow noopener noreferrer')
+      .hasAttribute('href', /^https:\/\/twitter\.com\/intent\/tweet/)
+      .hasClass('share')
+      .hasClass('button')
+      .containsText('Tweet this!');
+    assert.equal(
+      this.tweetParam('url'),
+      new URL('/foo/bar?baz=true#some-section', window.location.origin)
+    );
+  });
+
+  test('it supports passing @text', async function (assert) {
+    await render(
+      hbs`<ShareButton @text="Hello Twitter!">Tweet this!</ShareButton>`
+    );
+
+    assert.equal(this.tweetParam('text'), 'Hello Twitter!');
+  });
+
+  test('it supports passing @hashtags', async function (assert) {
+    await render(
+      hbs`<ShareButton @hashtags="foo,bar,baz">Tweet this!</ShareButton>`
+    );
+
+    assert.equal(this.tweetParam('hashtags'), 'foo,bar,baz');
+  });
+
+  test('it supports passing @via', async function (assert) {
+    await render(hbs`<ShareButton @via="emberjs">Tweet this!</ShareButton>`);
+    assert.equal(this.tweetParam('via'), 'emberjs');
+  });
+
+  test('it supports adding extra classes', async function (assert) {
+    await render(
+      hbs`<ShareButton class="extra things">Tweet this!</ShareButton>`
+    );
+
+    assert
+      .dom('a')
+      .hasClass('share')
+      .hasClass('button')
+      .hasClass('extra')
+      .hasClass('things');
+  });
+
+  test('the target, rel and href attributes cannot be overridden', async function (assert) {
+    await render(
+      hbs`<ShareButton target="_self" rel="" href="/">Not a Tweet!</ShareButton>`
+    );
+
+    assert
+      .dom('a')
+      .hasAttribute('target', '_blank')
+      .hasAttribute('rel', 'external nofollow noopener noreferrer')
+      .hasAttribute('href', /^https:\/\/twitter\.com\/intent\/tweet/);
+  });
+});
+```
+
+L'objectif principal ici est de tester les fonctionnalités clés du composant individuellement. De cette façon, si l'une de ces caractéristiques régresse à l'avenir, ces tests peuvent nous aider à identifier la source du problème. Parce que beaucoup de ces tests nécessitent l'analyse de l'URL et l'accès à ses paramètres de requête, nous configurons notre propre fonction d'assistance de test `this.tweetParam` dans le hook `beforeEach`. Ce modèle nous permet de partager facilement des fonctionnalités entre les tests. Nous avons même pu refactoriser le test précédent en utilisant ce nouvel assistant !

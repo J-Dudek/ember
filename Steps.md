@@ -1774,3 +1774,46 @@ Cela soulève une question intéressante : pourquoi l' assistant de test `curren
 Il s'avère que c'est quelque chose que le routeur d'Ember a géré pour nous. **_Dans une application Ember, le routeur est responsable de la gestion de la navigation et de la maintenance de l'URL_**. Par exemple, lorsque vous cliquez sur un composant `<LinkTo>`, il demandera au routeur d'exécuter une transition de route . **_Normalement, le routeur est configuré pour mettre à jour la barre d'adresse du navigateur chaque fois qu'il passe à une nouvelle route. De cette façon, vos utilisateurs pourront utiliser le bouton de retour et la fonctionnalité de signet du navigateur comme n'importe quelle autre page Web._**
 
 Cependant, **_lors des tests, le routeur est configuré pour conserver l'URL « logique » en interne, sans mettre à jour la barre d'adresse et les entrées d'historique du navigateur._** De cette façon, le routeur ne confondra pas le navigateur et son bouton de retour avec des centaines d'entrées d'historique pendant que vous effectuez vos tests. Le `currentURL()` puise dans cet élément d'état interne du routeur, au lieu de vérifier directement l'URL réelle dans la barre d'adresse à l'aide de `window.location.href`.
+
+### Routeur service
+
+Pour résoudre notre problème, nous aurions besoin de faire la même chose. Ember expose cet état interne via le service routeur , que nous pouvons injecter dans notre composant :
+
+```js
+//app/components/share-button.js
+import Component from '@glimmer/component';
+import { inject as service } from '@ember/service';
+
+const TWEET_INTENT = 'https://twitter.com/intent/tweet';
+
+export default class ShareButtonComponent extends Component {
+  @service router;
+  get currentURL() {
+    return new URL(this.router.currentURL, window.location.origin);
+  }
+
+  get shareURL() {
+    let url = new URL(TWEET_INTENT);
+
+    url.searchParams.set('url', this.currentURL);
+
+    if (this.args.text) {
+      url.searchParams.set('text', this.args.text);
+    }
+
+    if (this.args.hashtags) {
+      url.searchParams.set('hashtags', this.args.hashtags);
+    }
+
+    if (this.args.via) {
+      url.searchParams.set('via', this.args.via);
+    }
+
+    return url;
+  }
+}
+```
+
+Ici, nous avons ajouté la déclaration `@service router;` à notre classe de composant. Cela **_injecte le service de routeur dans le composant, le rendant disponible en tant que fichier `this.router`._** Le service de routeur a une propriété `currentURL`, fournissant l'URL "logique" actuelle telle que vue par le routeur d'Ember. Semblable à l'assistant de test du même nom, il s'agit d'une URL relative, nous devrons donc la joindre `window.location.origin` pour obtenir une URL absolue que nous pouvons partager.
+
+Avec ce changement, tout fonctionne maintenant comme nous l'avions prévu.

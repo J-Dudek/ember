@@ -1623,3 +1623,154 @@ La fonctionnalité clé de cette classe est de créer l'URL appropriée pour l'A
 L'autre fonctionnalité notable de cette classe concerne l'obtention de l'URL de la page actuelle et son ajout automatique à l'URL d'appel Twitter. Pour ce faire, nous avons défini un getter `currentURL` qui utilisait simplement l' objet global `Locationo` du navigateur , auquel nous pouvions accéder via `window.location`. Entre autres choses, il a une propriété `href` ( window.location.href) qui rapporte l'URL de la page actuelle.
 
 Mettons ce composant à profit en l'invoquant depuis le composant `<Rental::Detailed>` :
+
+```js
+//app/components/rental/detailed.hbs
+<Jumbo>
+    <h2>{{@rental.title}}</h2>
+    <p>Nice find! This looks like a nice place to stay near {{@rental.city}}.</p>
+    <ShareButton @text="Check out {{@rental.title}} on Super Rentals!"
+        @hashtags="vacation,travel,authentic,blessed,superrentals" @via="emberjs">
+        Share on Twitter
+    </ShareButton>
+</Jumbo>
+
+<article class="rental detailed">
+    <Rental::Image src={{@rental.image}} alt="A picture of {{@rental.title}}" />
+
+    <div class="details">
+        <h3>About {{@rental.title}}</h3>
+
+        <div class="detail owner">
+            <span>Owner:</span> {{@rental.owner}}
+        </div>
+        <div class="detail type">
+            <span>Type:</span> {{@rental.type}} – {{@rental.category}}
+        </div>
+        <div class="detail location">
+            <span>Location:</span> {{@rental.city}}
+        </div>
+        <div class="detail bedrooms">
+            <span>Number of bedrooms:</span> {{@rental.bedrooms}}
+        </div>
+        <div class="detail description">
+            <p>{{@rental.description}}</p>
+        </div>
+    </div>
+
+    <Map @lat={{@rental.location.lat}} @lng={{@rental.location.lng}} @zoom="12" @width="894" @height="600"
+        alt="A map of {{@rental.title}}" class="large" />
+</article>
+```
+
+### Ajout des tests
+
+```js
+//tests/acceptance/super-rentals-test.js
+import { module, test } from 'qunit';
+import { click, find, visit, currentURL } from '@ember/test-helpers';
+import { setupApplicationTest } from 'ember-qunit';
+
+module('Acceptance | super rentals', function (hooks) {
+  setupApplicationTest(hooks);
+
+  test('visiting /', async function (assert) {
+    await visit('/');
+
+    assert.equal(currentURL(), '/');
+    assert.dom('nav').exists();
+    assert.dom('h1').hasText('SuperRentals');
+    assert.dom('h2').hasText('Welcome to Super Rentals!');
+
+    assert.dom('.jumbo a.button').hasText('About Us');
+    await click('.jumbo a.button');
+
+    assert.equal(currentURL(), '/about');
+  });
+
+  test('viewing the details of a rental property', async function (assert) {
+    await visit('/');
+    assert.dom('.rental').exists({ count: 3 });
+
+    await click('.rental:first-of-type a');
+    assert.equal(currentURL(), '/rentals/grand-old-mansion');
+  });
+
+  test('visiting /rentals/grand-old-mansion', async function (assert) {
+    await visit('/rentals/grand-old-mansion');
+
+    assert.equal(currentURL(), '/rentals/grand-old-mansion');
+    assert.dom('nav').exists();
+    assert.dom('h1').containsText('SuperRentals');
+    assert.dom('h2').containsText('Grand Old Mansion');
+    assert.dom('.rental.detailed').exists();
+    assert.dom('.share.button').hasText('Share on Twitter');
+
+    let button = find('.share.button');
+
+    let tweetURL = new URL(button.href);
+    assert.equal(tweetURL.host, 'twitter.com');
+
+    assert.equal(
+      tweetURL.searchParams.get('url'),
+      `${window.location.origin}/rentals/grand-old-mansion`
+    );
+  });
+
+  test('visiting /about', async function (assert) {
+    await visit('/about');
+
+    assert.equal(currentURL(), '/about');
+    assert.dom('nav').exists();
+    assert.dom('h1').hasText('SuperRentals');
+    assert.dom('h2').hasText('About Super Rentals');
+
+    assert.dom('.jumbo a.button').hasText('Contact Us');
+    await click('.jumbo a.button');
+
+    assert.equal(currentURL(), '/getting-in-touch');
+  });
+
+  test('visiting /getting-in-touch', async function (assert) {
+    await visit('/getting-in-touch');
+
+    assert.equal(currentURL(), '/getting-in-touch');
+    assert.dom('nav').exists();
+    assert.dom('h1').hasText('SuperRentals');
+    assert.dom('h2').hasText('Contact Us');
+
+    assert.dom('.jumbo a.button').hasText('About');
+    await click('.jumbo a.button');
+
+    assert.equal(currentURL(), '/about');
+  });
+
+  test('navigating using the nav-bar', async function (assert) {
+    await visit('/');
+
+    assert.dom('nav').exists();
+    assert.dom('nav a.menu-index').hasText('SuperRentals');
+    assert.dom('nav a.menu-about').hasText('About');
+    assert.dom('nav a.menu-contact').hasText('Contact');
+
+    await click('nav a.menu-about');
+    assert.equal(currentURL(), '/about');
+
+    await click('nav a.menu-contact');
+    assert.equal(currentURL(), '/getting-in-touch');
+
+    await click('nav a.menu-index');
+    assert.equal(currentURL(), '/');
+  });
+});
+```
+
+Après execution : les tests ne passent pas!
+
+En regardant de près l'échec, le problème semble être que le composant a capturé http://localhost:4200/tests comme "l'URL de la page actuelle". Le problème ici est que le composant `<ShareButton>` utilise `window.location.href` pour capturer l'URL actuelle. Parce que nous effectuons nos tests à http://localhost:4200/tests, c'est ce que nous avons. Techniquement, ce n'est pas faux, mais ce n'est certainement pas ce que nous voulions dire.
+
+Cela soulève une question intéressante : pourquoi l' assistant de test `currentURL()` n'a-t-il pas le même problème ? Dans notre test, nous avons écrit des assertions comme `assert.equal(currentURL(), '/about');`, et ces assertions n'ont pas échoué.
+
+Il s'avère que c'est quelque chose que le routeur d'Ember a géré pour nous. **_Dans une application Ember, le routeur est responsable de la gestion de la navigation et de la maintenance de l'URL_**. Par exemple, lorsque vous cliquez sur un composant `<LinkTo>`, il demandera au routeur d'exécuter une transition de route . **_Normalement, le routeur est configuré pour mettre à jour la barre d'adresse du navigateur chaque fois qu'il passe à une nouvelle route. De cette façon, vos utilisateurs pourront utiliser le bouton de retour et la fonctionnalité de signet du navigateur comme n'importe quelle autre page Web._**
+
+Cependant, **_lors des tests, le routeur est configuré pour conserver l'URL « logique » en interne, sans mettre à jour la barre d'adresse et les entrées d'historique du navigateur._** De cette façon, le routeur ne confondra pas le navigateur et son bouton de retour avec des centaines d'entrées d'historique pendant que vous effectuez vos tests. Le `currentURL()` puise dans cet élément d'état interne du routeur, au lieu de vérifier directement l'URL réelle dans la barre d'adresse à l'aide de `window.location.href`.

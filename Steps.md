@@ -2030,3 +2030,64 @@ Nous pouvons accéder à ces attributs pour une utilisation d'instance `RentalMo
 Les classes de modèles dans Ember Data ne sont pas différentes des autres classes avec lesquelles nous avons travaillé jusqu'à présent, en ce sens qu'elles permettent un endroit pratique pour ajouter un comportement personnalisé. Nous avons profité de cette fonctionnalité pour déplacer notre typelogique (qui est une source majeure de duplication inutile dans nos gestionnaires de routes) dans un getter sur notre classe de modèle. Une fois que tout fonctionnera ici, nous y retournerons pour le nettoyer.
 
 Les attributs déclarés avec le décorateur `@attr`d fonctionnent avec la fonction de suivi automatique (dont nous avons appris dans un chapitre précédent ). Par conséquent, nous sommes libres de référencer n'importe quel attribut de modèle dans notre getter ( this.category), et Ember saura quand invalider son résultat.
+
+### Test de modèle
+
+Création du fichier de test :
+
+```bash
+ember generate model-test rental
+installing model-test
+  create tests/unit/models/rental-test.js
+```
+
+Que nous alllons remplir ainsi:
+
+```js
+//tests/unit/models/rental-test.js
+import { module, test } from 'qunit';
+import { setupTest } from 'ember-qunit';
+
+module('Unit | Model | rental', function (hooks) {
+  setupTest(hooks);
+
+  // Replace this with your real tests.
+  test('it has the right type', function (assert) {
+    let store = this.owner.lookup('service:store');
+    let rental = store.createRecord('rental', {
+      id: 'grand-old-mansion',
+      title: 'Grand Old Mansion',
+      owner: 'Veruca Salt',
+      city: 'San Francisco',
+      location: {
+        lat: 37.7749,
+        lng: -122.4194,
+      },
+      category: 'Estate',
+      bedrooms: 15,
+      image:
+        'https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg',
+      description:
+        'This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests.',
+    });
+
+    assert.equal(rental.type, 'Standalone');
+
+    rental.category = 'Condo';
+    assert.equal(rental.type, 'Community');
+
+    rental.category = 'Townhouse';
+    assert.equal(rental.type, 'Community');
+
+    rental.category = 'Apartment';
+    assert.equal(rental.type, 'Community');
+
+    rental.category = 'Estate';
+    assert.equal(rental.type, 'Standalone');
+  });
+});
+```
+
+Ce test de modèle est également appelé test unitaire . Contrairement à tous les autres tests que nous avons écrits jusqu'à présent, ce test ne rend rien. Il instancie simplement l'objet modèle de location et teste l'objet modèle directement, en manipulant ses attributs et en affirmant leur valeur.
+
+Il convient de souligner qu'Ember Data fournit un service `store` , également connu sous le nom de magasin Ember Data. Dans notre test, nous avons utilisé l'API `this.owner.lookup('service:store')` pour accéder au magasin Ember Data. Le magasin fournit une méthode `createRecord` pour instancier notre objet modèle pour nous.

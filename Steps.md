@@ -1967,3 +1967,66 @@ module('Integration | Component | share-button', function (hooks) {
 ```
 
 L'objectif principal ici est de tester les fonctionnalités clés du composant individuellement. De cette façon, si l'une de ces caractéristiques régresse à l'avenir, ces tests peuvent nous aider à identifier la source du problème. Parce que beaucoup de ces tests nécessitent l'analyse de l'URL et l'accès à ses paramètres de requête, nous configurons notre propre fonction d'assistance de test `this.tweetParam` dans le hook `beforeEach`. Ce modèle nous permet de partager facilement des fonctionnalités entre les tests. Nous avons même pu refactoriser le test précédent en utilisant ce nouvel assistant !
+
+## Étape 11 : Ember Data
+
+Ember Data est construit autour de l'idée d'organiser les données de votre application en objets de modèle . Ces objets représentent des unités d'informations que notre application présente à l'utilisateur. Par exemple, les données sur les propriétés locatives avec lesquelles nous avons travaillé seraient un bon candidat.
+
+```js
+//app/models/rental.js
+import Model, { attr } from '@ember-data/model';
+
+const COMMUNITY_CATEGORIES = ['Condo', 'Townhouse', 'Apartment'];
+
+export default class RentalModel extends Model {
+  @attr title;
+  @attr owner;
+  @attr city;
+  @attr location;
+  @attr category;
+  @attr image;
+  @attr bedrooms;
+  @attr description;
+
+  get type() {
+    if (COMMUNITY_CATEGORIES.includes(this.category)) {
+      return 'Community';
+    } else {
+      return 'Standalone';
+    }
+  }
+}
+```
+
+Ici, nous avons créé une class `RentalModel` qui étend la super classe `Model` d' Ember Data . Lors de la récupération des données de l'annonce sur le serveur, chaque propriété locative individuelle sera représentée par une instance (également connue sous le nom d' enregistrement de notre classe `RentalModel`.
+
+Nous avons utilisé le décorateur `@attr` pour déclarer les attributs d'un bien locatif. Ces attributs correspondent directement aux données `attributes` que nous attendons du serveur dans ses réponses :
+
+```json
+//public/api/rentals/grand-old-mansion.json
+{
+  "data": {
+    "type": "rentals",
+    "id": "grand-old-mansion",
+    "attributes": {
+      "title": "Grand Old Mansion",
+      "owner": "Veruca Salt",
+      "city": "San Francisco",
+      "location": {
+        "lat": 37.7749,
+        "lng": -122.4194
+      },
+      "category": "Estate",
+      "bedrooms": 15,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg",
+      "description": "This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests."
+    }
+  }
+}
+```
+
+Nous pouvons accéder à ces attributs pour une utilisation d'instance `RentalModel` par la notation par points standard, telle que `model.title` ou `model.location.lat`. En plus des attributs que nous avons déclarés ici, **_il y aura toujours un attribut id implicite_** , qui est utilisé pour identifier de manière unique l'objet modèle et auquel on peut accéder à l'aide de `model.id`.
+
+Les classes de modèles dans Ember Data ne sont pas différentes des autres classes avec lesquelles nous avons travaillé jusqu'à présent, en ce sens qu'elles permettent un endroit pratique pour ajouter un comportement personnalisé. Nous avons profité de cette fonctionnalité pour déplacer notre typelogique (qui est une source majeure de duplication inutile dans nos gestionnaires de routes) dans un getter sur notre classe de modèle. Une fois que tout fonctionnera ici, nous y retournerons pour le nettoyer.
+
+Les attributs déclarés avec le décorateur `@attr`d fonctionnent avec la fonction de suivi automatique (dont nous avons appris dans un chapitre précédent ). Par conséquent, nous sommes libres de référencer n'importe quel attribut de modèle dans notre getter ( this.category), et Ember saura quand invalider son résultat.

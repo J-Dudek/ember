@@ -2091,3 +2091,43 @@ module('Unit | Model | rental', function (hooks) {
 Ce test de modèle est également appelé test unitaire . Contrairement à tous les autres tests que nous avons écrits jusqu'à présent, ce test ne rend rien. Il instancie simplement l'objet modèle de location et teste l'objet modèle directement, en manipulant ses attributs et en affirmant leur valeur.
 
 Il convient de souligner qu'Ember Data fournit un service `store` , également connu sous le nom de magasin Ember Data. Dans notre test, nous avons utilisé l'API `this.owner.lookup('service:store')` pour accéder au magasin Ember Data. Le magasin fournit une méthode `createRecord` pour instancier notre objet modèle pour nous.
+
+### Chargement de models dans les routes
+
+Mettons à jour la route index :
+
+```js
+//app/routes/index.js
+import Route from '@ember/routing/route';
+
+import { inject as service } from '@ember/service';
+
+export default class IndexRoute extends Route {
+  @service store;
+
+  async model() {
+    return this.store.findAll('rental');
+  }
+}
+```
+
+Puis la route rental:
+
+```js
+//app/routes..rental.js
+import Route from '@ember/routing/route';
+
+import { inject as service } from '@ember/service';
+
+export default class RentalRoute extends Route {
+  @service store;
+
+  async model(params) {
+    return this.store.findRecord('rental', params.rental_id);
+  }
+}
+```
+
+Comme mentionné ci-dessus, Ember Data fournit un `service store`, que nous pouvons injecter dans notre itinéraire à l'aide de la déclaration `@service store;`, rendant le magasin Ember Data disponible en tant que fichier `this.store`. Il fournit les méthodes `find` et `findAll` pour le chargement des enregistrements. Plus précisément, la méthode `findRecord` prend un type de modèle ( rental dans notre cas) et un ID de modèle (pour nous, ce serait `params.rental_id` de l'URL) comme arguments et récupère un seul enregistrement du magasin. D'autre part, la méthode `findAll` prend le type de modèle comme argument et récupère tous les enregistrements de ce type dans le magasin.
+
+Le magasin Ember Data agit comme une sorte d'intermédiaire entre notre application et le serveur ; il fait beaucoup de choses importantes, y compris la mise en cache des réponses extraites du serveur. Si nous demandons des enregistrements (instances de classes de modèle) que nous avions déjà récupérés du serveur dans le passé, le magasin d'Ember Data garantit que nous pouvons accéder aux enregistrements immédiatement, sans avoir à les récupérer inutilement et attendre que le serveur réponde. Mais, si nous n'avons pas déjà cette réponse mise en cache dans notre magasin, elle s'éteindra et la récupèrera sur le serveur. Plutôt sympa, non ?

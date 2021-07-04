@@ -2131,3 +2131,47 @@ export default class RentalRoute extends Route {
 Comme mentionné ci-dessus, Ember Data fournit un `service store`, que nous pouvons injecter dans notre itinéraire à l'aide de la déclaration `@service store;`, rendant le magasin Ember Data disponible en tant que fichier `this.store`. Il fournit les méthodes `find` et `findAll` pour le chargement des enregistrements. Plus précisément, la méthode `findRecord` prend un type de modèle ( rental dans notre cas) et un ID de modèle (pour nous, ce serait `params.rental_id` de l'URL) comme arguments et récupère un seul enregistrement du magasin. D'autre part, la méthode `findAll` prend le type de modèle comme argument et récupère tous les enregistrements de ce type dans le magasin.
 
 Le magasin Ember Data agit comme une sorte d'intermédiaire entre notre application et le serveur ; il fait beaucoup de choses importantes, y compris la mise en cache des réponses extraites du serveur. Si nous demandons des enregistrements (instances de classes de modèle) que nous avions déjà récupérés du serveur dans le passé, le magasin d'Ember Data garantit que nous pouvons accéder aux enregistrements immédiatement, sans avoir à les récupérer inutilement et attendre que le serveur réponde. Mais, si nous n'avons pas déjà cette réponse mise en cache dans notre magasin, elle s'éteindra et la récupèrera sur le serveur. Plutôt sympa, non ?
+
+### Utilisation des Adapters et des Serializers
+
+Ember Data utilise une architecture d' adaptateur et de sérialiseur . Les adaptateurs déterminent comment et où Ember Data doit récupérer les données de vos serveurs, par exemple s'il faut utiliser HTTP, HTTPS, WebSockets ou le stockage local, ainsi que les URL, les en-têtes et les paramètres à utiliser pour ces requêtes. D'autre part, les sérialiseurs sont chargés de convertir les données renvoyées par le serveur dans un format que Ember Data peut comprendre.
+
+L'idée est que, à condition que votre backend expose un protocole et un format d'échange cohérents pour accéder à ses données, nous pouvons écrire une seule paire adaptateur-sérialiseur pour gérer toutes les récupérations de données pour l'ensemble de l'application.
+
+Il s'avère que JSON:API se trouve être le protocole de données et le format d'échange par défaut d'Ember Data. Prêt à l'emploi, Ember Data fournit un adaptateur et un sérialiseur JSON:API par défaut. C'est une excellente nouvelle pour nous, car c'est aussi ce que notre serveur a mis en place. Quelle merveilleuse coïncidence !
+
+Cependant, comme mentionné ci-dessus, il existe quelques différences mineures entre le fonctionnement de notre serveur et les hypothèses par défaut d'Ember Data. Nous pouvons personnaliser le comportement par défaut en définissant notre propre adaptateur et sérialiseur :
+
+```js
+//app/adapters/application.js
+import JSONAPIAdapter from '@ember-data/adapter/json-api';
+
+export default class ApplicationAdapter extends JSONAPIAdapter {
+  namespace = 'api';
+
+  buildURL(...args) {
+    return `${super.buildURL(...args)}.json`;
+  }
+}
+```
+
+avec
+
+```js
+//app/serializers/application.js
+import JSONAPISerializer from '@ember-data/serializer/json-api';
+
+export default class ApplicationSerializer extends JSONAPISerializer {}
+```
+
+Par **_convention_**, les **_adaptateurs_** sont situés à **_app/adapters_**. De plus, l'adaptateur nommé `application` s'appelle l' adaptateur d'application , qui sera utilisé pour récupérer les données de tous les modèles de notre application.
+
+À l'intérieur de ce fichier nouvellement créé, nous avons défini une classe `ApplicationAdapter`, héritant du fichier `JSONAPIAdapter`. Cela nous permet d'hériter de toutes les fonctionnalités JSON:API par défaut, tout en personnalisant les choses qui ne fonctionnaient pas pour nous par défaut. Spécifiquement:
+
+- Nos URL de ressources ont un préfixe `/api` de noms supplémentaire .
+- Nos URL de ressources ont une extension `.json` à la fin.
+  L'ajout d'un préfixe d'espace de noms est assez courant dans les applications Ember, donc le `JSONAPIAdapter` a une API pour faire exactement cela. Tout ce que nous avons à faire est de définir la propriété `namespace` sur le préfixe que nous voulons, soit `api`dans notre cas.
+
+L'ajout de l'extension `.json` est un peu moins courant et n'a pas sa propre API de configuration déclarative. Au lieu de cela, nous devrons remplacer la méthode `buildURL` d' Ember Data . À l'intérieur de `buildURL`, nous appellerons `super.buildURL(...args)` pour invoquer l'implémentation `JSONAPIAdapter` par défaut de buildURL. Cela nous donnera l'URL que l'adaptateur aurait construit , ce qui serait quelque chose comme `/api/rental` set `/api/rentals/grand-old-mansion` après avoir configuré le namespace. Tout ce que nous avons à faire est d'ajouter `.json` à cette URL et de la renvoyer.
+
+De même, **_les sérialiseurs_** sont situés à **_app/serializers_**. **_Les adaptateurs et les sérialiseurs sont toujours ajoutés par paire._** Nous avons ajouté un adaptateur `application`, nous avons donc également ajouté un sérialiseur correspondant pour l'accompagner. Étant donné que les données JSON renvoyées par notre serveur sont compatibles JSON:API, la valeur par défaut JSONAPISerializer fonctionne parfaitement pour nous sans personnalisation supplémentaire.

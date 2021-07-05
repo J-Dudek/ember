@@ -2202,3 +2202,132 @@ De même, **_les sérialiseurs_** sont situés à **_app/serializers_**. **_Les 
 </div>
 ```
 
+### Refactorisation du template index dans un composant
+
+Pour que notre champ de recherche fonctionne réellement, nous devrons conserver et stocker le texte que l'utilisateur saisit lorsqu'il utilise le champ de recherche. Ce texte est la requête de recherche, et c'est un élément d' état qui va changer chaque fois que l'utilisateur tape quelque chose dans la zone de recherche.
+
+Mais où allons-nous mettre ce morceau d'État nouvellement introduit? Afin de câbler le champ de recherche, nous avons besoin d'un endroit pour stocker la requête de recherche. Pour le moment, notre champ de recherche réside sur le template `index.hbs` de route, qui n'a pas un bon endroit pour stocker cet état de requête de recherche. Cela serait tellement plus facile à faire si nous avions un composant, car nous pourrions simplement stocker l'état directement sur le composant !
+
+Attendez... pourquoi ne pas simplement refactoriser le champ de recherche dans un composant ? Une fois que nous aurons fait cela, tout sera un peu plus facile - hourra !
+
+Reprenons simplement et commençons notre refactorisation en créant un nouveau modèle pour notre composant, que nous appellerons `rentals.hbs`.
+
+```hbs
+<!-- app/components/rentals.hbs -->
+<div class='rentals'>
+  <label>
+    <span>Where would you like to stay?</span>
+    <input class='light' />
+  </label>
+
+  <ul class='results'>
+    {{#each @rentals as |rental|}}
+      <li><Rental @rental={{rental}} /></li>
+    {{/each}}
+  </ul>
+</div>
+```
+
+Il y a un changement mineur à noter ici : lors de l'extraction de notre balisage dans un composant, nous avons également renommé l' argument `@model` à la place de `@rentals`, juste afin d'être un peu plus précis sur ce que nous parcourons dans notre boucle `{{#each}}`. Sinon, tout ce que nous faisons ici, c'est copier-coller ce qui se trouvait sur notre page `index.hbs` dans notre nouveau modèle de composant. Il ne nous reste plus qu'à utiliser notre nouveau composant dans le modèle d'index où nous avons commencé tout ce refactor ! Rendons notre composant `<Rentals>` dans notre template `index.hbs`.
+
+```hbs
+<!-- app/templates/index.hbs -->
+<Jumbo>
+  <h2>Welcome to Super Rentals!</h2>
+  <p>We hope you find exactly what you're looking for in a place to stay.</p>
+  <LinkTo @route='about' class='button'>About Us</LinkTo>
+</Jumbo>
+<Rentals @rentals={{@model}} />
+```
+
+Vous vous souvenez du petit changement que nous avons apporté au balisage lorsque nous avons extrait notre composant `<Rentals>` ? Nous avons renommé l'argument `@model` en `@rentals`. Étant donné que nous avons apporté cette modification à notre composant, nous devons maintenant transmettre l' argument `@model` au composant `<Rentals>` en tant que `@rentals`. Une fois que nous avons fait cela, tout doit être câblé correctement afin que le `@model` soit transmis à `<Rentals>` en tant que `@rentals`, comme nous l'attendions.
+
+```js
+//tests/integration/components/rentals-test.js
+import { module, test } from 'qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
+
+module('Integration | Component | rentals', function (hooks) {
+  setupRenderingTest(hooks);
+
+  test('it renders all given rental properties by default', async function (assert) {
+    this.setProperties({
+      rentals: [
+        {
+          id: 'grand-old-mansion',
+          title: 'Grand Old Mansion',
+          owner: 'Veruca Salt',
+          city: 'San Francisco',
+          location: {
+            lat: 37.7749,
+            lng: -122.4194,
+          },
+          category: 'Estate',
+          type: 'Standalone',
+          bedrooms: 15,
+          image:
+            'https://upload.wikimedia.org/wikipedia/commons/c/cb/Crane_estate_(5).jpg',
+          description:
+            'This grand old mansion sits on over 100 acres of rolling hills and dense redwood forests.',
+        },
+        {
+          id: 'urban-living',
+          title: 'Urban Living',
+          owner: 'Mike Teavee',
+          city: 'Seattle',
+          location: {
+            lat: 47.6062,
+            lng: -122.3321,
+          },
+          category: 'Condo',
+          type: 'Community',
+          bedrooms: 1,
+          image:
+            'https://upload.wikimedia.org/wikipedia/commons/2/20/Seattle_-_Barnes_and_Bell_Buildings.jpg',
+          description:
+            'A commuters dream. This rental is within walking distance of 2 bus stops and the Metro.',
+        },
+        {
+          id: 'downtown-charm',
+          title: 'Downtown Charm',
+          owner: 'Violet Beauregarde',
+          city: 'Portland',
+          location: {
+            lat: 45.5175,
+            lng: -122.6801,
+          },
+          category: 'Apartment',
+          type: 'Community',
+          bedrooms: 3,
+          image:
+            'https://upload.wikimedia.org/wikipedia/commons/f/f7/Wheeldon_Apartment_Building_-_Portland_Oregon.jpg',
+          description:
+            'Convenience is at your doorstep with this charming downtown rental. Great restaurants and active night life are within a few feet.',
+        },
+      ],
+    });
+
+    await render(hbs`<Rentals @rentals={{this.rentals}} />`);
+
+    assert.dom('.rentals').exists();
+    assert.dom('.rentals input').exists();
+
+    assert.dom('.rentals .results').exists();
+    assert.dom('.rentals .results li').exists({ count: 3 });
+
+    assert
+      .dom('.rentals .results li:nth-of-type(1)')
+      .containsText('Grand Old Mansion');
+
+    assert
+      .dom('.rentals .results li:nth-of-type(2)')
+      .containsText('Urban Living');
+
+    assert
+      .dom('.rentals .results li:nth-of-type(3)')
+      .containsText('Downtown Charm');
+  });
+});
+```

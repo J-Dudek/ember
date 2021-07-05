@@ -5,10 +5,12 @@
     </label>
 
     <ul class="results">
-        {{#each @rentals as |rental|}}
-        <li>
-            <Rental @rental={{rental}} />
-        </li>
-        {{/each}}
+        <Rentals::Filter @rentals={{@rentals}} @query={{this.query}} as |results|>
+            {{#each results as |rental|}}
+            <li>
+                <Rental @rental={{rental}} />
+            </li>
+            {{/each}}
+        </Rentals::Filter>
     </ul>
 </div>

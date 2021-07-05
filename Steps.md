@@ -2175,3 +2175,30 @@ Par **_convention_**, les **_adaptateurs_** sont situés à **_app/adapters_**. 
 L'ajout de l'extension `.json` est un peu moins courant et n'a pas sa propre API de configuration déclarative. Au lieu de cela, nous devrons remplacer la méthode `buildURL` d' Ember Data . À l'intérieur de `buildURL`, nous appellerons `super.buildURL(...args)` pour invoquer l'implémentation `JSONAPIAdapter` par défaut de buildURL. Cela nous donnera l'URL que l'adaptateur aurait construit , ce qui serait quelque chose comme `/api/rental` set `/api/rentals/grand-old-mansion` après avoir configuré le namespace. Tout ce que nous avons à faire est d'ajouter `.json` à cette URL et de la renvoyer.
 
 De même, **_les sérialiseurs_** sont situés à **_app/serializers_**. **_Les adaptateurs et les sérialiseurs sont toujours ajoutés par paire._** Nous avons ajouté un adaptateur `application`, nous avons donc également ajouté un sérialiseur correspondant pour l'accompagner. Étant donné que les données JSON renvoyées par notre serveur sont compatibles JSON:API, la valeur par défaut JSONAPISerializer fonctionne parfaitement pour nous sans personnalisation supplémentaire.
+
+## Étape 12 : Provider Components
+
+### Ajout d'un composant `<Input>`
+
+```hbs
+<!-- app/templates/index.hbs -->
+<Jumbo>
+  <h2>Welcome to Super Rentals!</h2>
+  <p>We hope you find exactly what you're looking for in a place to stay.</p>
+  <LinkTo @route='about' class='button'>About Us</LinkTo>
+</Jumbo>
+<div class='rentals'>
+  <label>
+    <span>Where would you like to stay?</span>
+    <input class='light' />
+  </label>
+  <ul class='results'>
+    {{#each @model as |rental|}}
+      <li>
+        <Rental @rental={{rental}} />
+      </li>
+    {{/each}}
+  </ul>
+</div>
+```
+

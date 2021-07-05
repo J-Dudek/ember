@@ -1,12 +1,11 @@
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
-import { render } from '@ember/test-helpers';
+import { render, fillIn } from '@ember/test-helpers';
 import { hbs } from 'ember-cli-htmlbars';
 
 module('Integration | Component | rentals', function (hooks) {
     setupRenderingTest(hooks);
-
-    test('it renders all given rental properties by default', async function (assert) {
+    hooks.beforeEach(function () {
         this.setProperties({
             rentals: [
                 {
@@ -62,7 +61,9 @@ module('Integration | Component | rentals', function (hooks) {
                 },
             ],
         });
+    });
 
+    test('it renders all given rental properties by default', async function (assert) {
         await render(hbs`<Rentals @rentals={{this.rentals}} />`);
 
         assert.dom('.rentals').exists();
@@ -82,5 +83,24 @@ module('Integration | Component | rentals', function (hooks) {
         assert
             .dom('.rentals .results li:nth-of-type(3)')
             .containsText('Downtown Charm');
+    });
+
+    test('it updates the results according to the search query', async function (assert) {
+        await render(hbs`<Rentals @rentals={{this.rentals}} />`);
+
+        assert.dom('.rentals').exists();
+        assert.dom('.rentals input').exists();
+
+        await fillIn('.rentals input', 'Downtown');
+
+        assert.dom('.rentals .results').exists();
+        assert.dom('.rentals .results li').exists({ count: 1 });
+        assert.dom('.rentals .results li').containsText('Downtown Charm');
+
+        await fillIn('.rentals input', 'Mansion');
+
+        assert.dom('.rentals .results').exists();
+        assert.dom('.rentals .results li').exists({ count: 1 });
+        assert.dom('.rentals .results li').containsText('Grand Old Mansion');
     });
 });

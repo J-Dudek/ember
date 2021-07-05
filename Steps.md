@@ -2331,3 +2331,41 @@ module('Integration | Component | rentals', function (hooks) {
   });
 });
 ```
+
+### Fonctions sur l'Input
+
+Maintenant que notre composant est entièrement configuré, nous pouvons enfin connecter notre champ de recherche et stocker notre requête de recherche ! Tout d'abord : créons une classe de composant pour stocker l'état de notre requête.
+
+```js
+//app/components/rentals.js
+import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
+
+export default class RentalsComponent extends Component {
+  @tracked query = '';
+}
+```
+
+Ensuite, nous allons câbler notre état de requête dans le modèle de composant.
+
+```hbs
+<!-- app/components/rentals.hbs-->
+<div class='rentals'>
+  <label>
+    <span>Where would you like to stay?</span>
+    <Input @value={{this.query}} class='light' />
+  </label>
+
+  <ul class='results'>
+    {{#each @rentals as |rental|}}
+      <li>
+        <Rental @rental={{rental}} />
+      </li>
+    {{/each}}
+  </ul>
+</div>
+```
+
+Intéressant! Il se passe certaines choses dans ce changement de modèle d'une ligne. Premièrement, nous passons d'une simple balise HTML `<input>` à l'utilisation d'une balise `<Input>` à la place ! En fin de compte, Ember nous fournit un petit composant `<Input>` utile pour ce cas d'utilisation précis. Le composant `<Input>` n'est en fait qu'un wrapper autour de l'élément `<input>`.
+
+Le composant `<Input>` d'Ember est plutôt chouette ; il câblera les choses dans les coulisses de telle sorte que, chaque fois que l'utilisateur tape quelque chose dans la zone de saisie, `this.query` change en conséquence. En d'autres termes, `this.query` est maintenu en phase avec la valeur de ce qui est recherché ; nous avons enfin le moyen idéal de stocker l'état de notre requête de recherche !

@@ -2,7 +2,7 @@
 
 ## Étape 1
 
-Crée un projet ember avec `ember new super-rentals`
+Créer un projet ember avec `ember new super-rentals`
 
 Se rendre dans le projet `cd super-rentals`
 

@@ -1,56 +1,20 @@
-# super-rentals
+# [super-rentals](https://guides.emberjs.com/v3.26.0/tutorial/part-1/)
 
-This README outlines the details of collaborating on this Ember application.
-A short introduction of this app could easily go here.
+Projet d'initiation aux bases d'Ember, fait en suivant [ce tutoriel officiel](https://guides.emberjs.com/v3.26.0/tutorial/part-1/).
+Liste de l'ensemble des étapes [ICI](./Steps.md)
 
-## Prerequisites
+---
+## Étape 2
 
-You will need the following things properly installed on your computer.
+Comme le texte de la page d'accueil l'a souligné, le code source de la page se trouve dans `app/templates/application.hbs`
 
-* [Git](https://git-scm.com/)
-* [Node.js](https://nodejs.org/) (with npm)
-* [Ember CLI](https://ember-cli.com/)
-* [Google Chrome](https://google.com/chrome/)
+- En modifiant le contenu on modifie la page d'accueil.
 
-## Installation
+- Suppression de `application.hbs`
+  --> l'application ne crash pas ;)
 
-* `git clone <repository-url>` this repository
-* `cd super-rentals`
-* `npm install`
+- Création de `app/templates/index.hbs` , l'application affiche directement le contenu de la page, le Routeur inclus dans ember fait le job et renvoi l'index.
 
-## Running / Development
+- Ajout de style et du Logo.
 
-* `ember serve`
-* Visit your app at [http://localhost:4200](http://localhost:4200).
-* Visit your tests at [http://localhost:4200/tests](http://localhost:4200/tests).
-
-### Code Generators
-
-Make use of the many generators for code, try `ember help generate` for more details
-
-### Running Tests
-
-* `ember test`
-* `ember test --server`
-
-### Linting
-
-* `npm run lint`
-* `npm run lint:fix`
-
-### Building
-
-* `ember build` (development)
-* `ember build --environment production` (production)
-
-### Deploying
-
-Specify what it takes to deploy your app.
-
-## Further Reading / Useful Links
-
-* [ember.js](https://emberjs.com/)
-* [ember-cli](https://ember-cli.com/)
-* Development Browser Extensions
-  * [ember inspector for chrome](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi)
-  * [ember inspector for firefox](https://addons.mozilla.org/en-US/firefox/addon/ember-inspector/)
+---

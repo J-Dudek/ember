@@ -1,5 +1,11 @@
 # [super-rentals](https://guides.emberjs.com/v3.26.0/tutorial/part-1/)
 
+---
+
+La branche `Main` est le résultat final, sur chaque branche le Readme indiquera les étapes à faire afin d'obtenir ce résultat : https://tuto-ember.netlify.app/
+
+---
+
 Projet d'initiation aux bases d'Ember, fait en suivant [ce tutoriel officiel](https://guides.emberjs.com/v3.26.0/tutorial/part-1/).
 Liste de l'ensemble des étapes [ICI](./Steps.md)
 

@@ -4,65 +4,103 @@ Projet d'initiation aux bases d'Ember, fait en suivant [ce tutoriel officiel](ht
 Liste de l'ensemble des étapes [ICI](./Steps.md)
 
 ---
-## Étape 4 : Tests Autos
 
-- Lancer la commande :
+## Étape 5 : Components (basic)
 
-```bash
-ember generate acceptance-test super-rentals
+- `{{outlet}}` -> Utilisation des templates de l'application
+- `{{yield}}` -> Rendement du contenu
+  Au cours du développement d'une application, il est assez courant de réutiliser le même élément d'interface utilisateur dans différentes parties de l'application. Par exemple, nous avons utilisé le même en-tête "jumbo" dans les trois pages jusqu'à présent. Sur chaque page, nous avons travaillé pour suivre la même structure de base :
+
+```js
+<div class="jumbo">
+  <div class="right tomster"></div>
+  <!-- page specific content -->
+</div>
 ```
 
-C'est ce qu'on appelle une commande de générateur dans Ember CLI. Les générateurs créent automatiquement des fichiers pour nous en fonction des conventions d'Ember et les remplissent avec le contenu passe-partout approprié, de la même manière que la `ember new` création initiale d'une application squelette pour nous. Il suit généralement le modèle ` ember generate <type> <name>` , où `<type>` est le genre de chose que nous générons, et `<name>` est ce que nous voulons l'appeler.
+Comme il ne s'agit pas de beaucoup de code, cela peut sembler peu compliqué de dupliquer cette structure sur chaque page. Cependant, si notre concepteur voulait que nous modifiions l'en-tête, nous devions rechercher et mettre à jour chaque copie de ce code. Au fur et à mesure que notre application grandira, cela deviendra encore plus problématique.
 
-Dans ce cas, nous avons généré un test d'acceptation situé à `tests/acceptance/super-rentals-test.js`.
+Les composants sont la solution parfaite à cela. Dans sa forme la plus basique, un composant n'est qu'un morceau de modèle auquel on peut faire référence par son nom. Commençons par créer un nouveau fichier `app/components/jumbo.hbs` avec un balisage pour l'en-tête "jumbo":
 
-Les générateurs ne sont pas nécessaires ; nous aurions pu créer le fichier nous-mêmes, ce qui aurait fait exactement la même chose. Mais, les générateurs nous évitent certainement beaucoup de frappe. Allez-y et jetez un coup d'œil au fichier de test d'acceptation et voyez par vous-même.
+```html
+<div class="jumbo">
+  <div class="right tomster"></div>
+  {{yield}}
+</div>
+```
 
-Les tests d'acceptation, également appelés tests d'application , sont l'un des rares types de tests automatisés à notre disposition à Ember. Nous verrons les autres types plus tard, mais ce qui rend les tests d'acceptation uniques, c'est qu'ils testent notre application du point de vue de l'utilisateur. ce dont nous avons besoin.
+### Passer du contenu aux composants avec ```{{yield}}````
 
-Ouvrons le fichier de test généré et remplaçons le test standard par le nôtre :
+Lors de l'appel d'un composant, Ember remplacera la balise du composant par le contenu trouvé dans le modèle du composant. Tout comme les balises HTML classiques, il est courant de transmettre du contenu à des composants, tels que <Jumbo>some content</Jumbo>. Nous pouvons l'activer en utilisant le mot-clé `{{yield}}` , qui sera remplacé par le contenu qui a été passé au composant.
+
+Essayons-le en modifiant le modèle d'index :
+
+```js
+<Jumbo>
+  <h2>Welcome to Super Rentals!</h2>
+  <p>We hope you find exactly what you're looking for in a place to stay.</p>
+  <LinkTo @route="about" class="button">About Us</LinkTo>
+</Jumbo>
+```
+
+### Écriture de tests de composants
+
+Lancer
+
+```bash
+ember generate component-test jumbo
+```
+
+Remplaçons le code passe-partout qui a été généré pour nous par notre propre test :
 
 ```js
 import { module, test } from 'qunit';
-import { click, visit, currentURL } from '@ember/test-helpers';
-import { setupApplicationTest } from 'ember-qunit';
+import { setupRenderingTest } from 'ember-qunit';
+import { render } from '@ember/test-helpers';
+import { hbs } from 'ember-cli-htmlbars';
 
-module('Acceptance | super rentals', function (hooks) {
-  setupApplicationTest(hooks);
+module('Integration | Component | jumbo', function (hooks) {
+  setupRenderingTest(hooks);
 
-  test('visiting /', async function (assert) {
-    await visit('/');
-    assert.equal(currentURL(), '/');
-    assert.dom('h2').hasText('Welcome to Super Rentals!');
+  test('it renders the content inside a jumbo header with a tomster', async function (assert) {
+    await render(hbs`<Jumbo>Hello World</Jumbo>`);
 
-    assert.dom('.jumbo a.button').hasText('About Us');
-    await click('.jumbo a.button');
-
-    assert.equal(currentURL(), '/about');
+    assert.dom('.jumbo').exists();
+    assert.dom('.jumbo').hasText('Hello World');
+    assert.dom('.jumbo .tomster').exists();
   });
 });
 ```
 
-Tout d'abord, nous demandons au robot de test de naviguer vers l' URL `/` de notre application à l'aide de l' visit assistant de test fourni par Ember. Cela revient à taper http://localhost:4200/ dans la barre d'adresse du navigateur et à appuyer sur la touche entrer.
+### Ajout `<NavBar>`
 
-Parce que la page va prendre un certain temps à se charger, c'est ce qu'on appelle une étape async (abréviation de asynchrone ), nous devrons donc dire au robot de test d'attendre en utilisant le mot-clé await de JavaScript . De cette façon, il attendra la fin du chargement de la page avant de passer à l'étape suivante.
+Nous pouvons créer un <NavBar>composant à `app/components/nav-bar.hbs`
+Et nous l'ajoutons ainsi sur chaque page existanteen ajoutant en haut de page :
 
-C'est presque toujours le comportement que nous voulons, nous utiliserons donc presque toujours `await` et `visit` par paire. Cela s'applique également à d'autres types d'interactions simulées, telles que cliquer sur un bouton ou un lien, car elles prennent toutes du temps à se terminer. Même si parfois ces actions peuvent nous sembler imperceptiblement rapides, nous devons nous rappeler que notre robot de test a des mains vraiment, vraiment rapides.
+```js
+<NavBar />
+```
 
-Après avoir navigué vers l' URL `/` et attendu que les choses se règlent, nous vérifions que l'URL actuelle correspond à l'URL que nous attendons ( /). Nous pouvons utiliser l'annotation `currentURL` de test ici, ainsi que equal assertion . C'est ainsi que nous encodons notre « liste de contrôle » dans le code : en spécifiant ou en affirmant comment les choses doivent se comporter, nous serons alertés si notre application ne se comporte pas comme prévu.
+### Utilisation du modèle d'application et des ```{{outlet}}````
 
-Ensuite, nous avons confirmé que la page contient une balise `<h2>` contenant le texte "Bienvenue dans les super locations !". Savoir que cela est vrai signifie que nous pouvons être tout à fait certains que le modèle correct a été rendu, sans erreurs.
+Avant de passer à la fonctionnalité suivante, il y a encore une chose que nous pourrions nettoyer. Étant donné que le composant `<NavBar>`est utilisé pour la navigation à l'échelle du site, il doit vraiment être affiché sur chaque page de l'application. Jusqu'à présent, nous avons ajouté le composant sur chaque page manuellement. C'est un peu sujet aux erreurs, car nous pourrions facilement oublier de le faire la prochaine fois que nous ajouterons une nouvelle page.
 
-Ensuite, nous avons cherché un lien avec le texte About Us, localisé à l'aide du sélecteur CSS `.jumbo a.button` . C'est la même syntaxe que nous avons utilisée dans notre feuille de style, ce qui signifie "rechercher dans la balise avec la classe jumbo pour une balise `<a>` avec la classe button". Cela correspond à la structure HTML de notre modèle.
+Nous pouvons résoudre ce problème en déplaçant la barre de navigation dans un modèle spécial appelé application.hbs. Vous vous souvenez peut-être qu'il a été généré pour nous lorsque nous avons créé l'application pour la première fois, mais nous l'avons supprimé. Maintenant, il est temps pour nous de le ramener!
 
-Une fois l'existence de cet élément sur la page confirmée, nous avons dit au robot de test de cliquer sur ce lien. Comme mentionné ci-dessus, il s'agit d'une interaction utilisateur, elle doit donc être en await.
+Ce modèle est spécial en ce qu'il n'a pas sa propre URL et ne peut pas être consulté seul. Il est plutôt utilisé pour spécifier une mise en page commune qui est partagée par chaque page de votre application. C'est un endroit idéal pour mettre des éléments d'interface utilisateur à l'échelle du site, comme une barre de navigation et un pied de page de site.
 
-Enfin, nous avons affirmé que cliquer sur le lien devrait nous amener à l'URL `/about`.
+Pendant que nous y sommes, nous allons également ajouter un élément conteneur qui enveloppe toute la page, comme demandé par notre concepteur à des fins de style.
+Nous recréons donc `app/templates/application.hbs` :
 
-### Lancement des tests
+```hbs
+<div class='container'>
+  <NavBar />
+  <div class='body'>{{outlet}}</div>
+</div>
+```
 
-Nous pouvons lancer notre test automatisé en exécutant le serveur de test à l'aide de la commande `ember test --server `, ou `ember t -s` pour faire court.
+Et supprimons les `<NavBar />` des autres tempplates.
 
-Ce serveur se comporte un peu comme le serveur de développement, mais il s'exécute explicitement pour nos tests. Il peut ouvrir automatiquement une fenêtre de navigateur et vous amener à l'interface utilisateur de test, ou vous pouvez l'ouvrir sur http://localhost:7357/.
+Le mot-clé `{{outlet}}` désigne l'endroit où les pages de notre site doivent être rendues, similaire au mot-clé `{{yield}}` que nous avons vu plus tôt .
 
 ---

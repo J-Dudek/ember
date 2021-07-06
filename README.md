@@ -1,6 +1,8 @@
 # [super-rentals](https://guides.emberjs.com/v3.26.0/tutorial/part-1/)
 
----
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/J-Dudek/ember.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/J-Dudek/ember/alerts/)
+
+## [![Total alerts](https://img.shields.io/lgtm/alerts/g/J-Dudek/ember.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/J-Dudek/ember/alerts/)
 
 La branche `Main` est le résultat final, sur chaque branche le Readme indiquera les étapes à faire afin d'obtenir ce résultat : https://tuto-ember.netlify.app/
 
